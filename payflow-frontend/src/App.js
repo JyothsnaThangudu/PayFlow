@@ -3,6 +3,8 @@ import React from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import AdminLoginPage from './pages/AdminLoginPage';
 import AdminDashboard from './pages/AdminDashboard';
+import AdminSettings from './pages/AdminSettings';
+import UserManagement from './pages/UserManagement';
 import AddUser from './pages/AddUser';
 import ResetPassword from './pages/ResetPassword';
 import Navbar from "./components/Navbar";
@@ -41,6 +43,8 @@ function App() {
                 <Route path="/manager/payroll-dashboard" element={<PayrollDashboard />} />
                 <Route path="/manager/payslip-viewer" element={<PayslipViewer />} />
                 <Route path="/admin-dashboard" element={<AdminDashboard />} />
+                <Route path="/admin-settings" element={<AdminSettings />} />
+                <Route path="/user-management" element={<UserManagement />} />
                 <Route path="/navbar" element={<Navbar/>} />
                 <Route path="/sidebar" element={<Sidebar/>}/>
                 <Route path="/create-user" element={<AddUser/>} />

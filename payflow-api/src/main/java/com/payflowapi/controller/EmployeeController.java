@@ -1,4 +1,5 @@
 package com.payflowapi.controller;
+
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
 import com.payflowapi.dto.EmployeeDto;
@@ -144,25 +145,28 @@ public class EmployeeController {
         long daysRequested = java.time.temporal.ChronoUnit.DAYS.between(fromDate, toDate) + 1;
 
         // Check leave balance - count accepted leaves for this employee
-        List<EmployeeLeave> acceptedLeaves = employeeLeaveRepository.findByEmployeeIdAndStatus(employee.getId(), "ACCEPTED");
+        List<EmployeeLeave> acceptedLeaves = employeeLeaveRepository.findByEmployeeIdAndStatus(employee.getId(),
+                "ACCEPTED");
         long usedLeaves = 0;
         for (EmployeeLeave leave : acceptedLeaves) {
             if (leave.getFromDate() != null && leave.getToDate() != null) {
                 usedLeaves += java.time.temporal.ChronoUnit.DAYS.between(leave.getFromDate(), leave.getToDate()) + 1;
             }
         }
-        
+
         final int TOTAL_ANNUAL_LEAVES = 12;
         long remainingLeaves = TOTAL_ANNUAL_LEAVES - usedLeaves;
 
         // Check if employee has any remaining leaves
         if (remainingLeaves <= 0) {
-            return ResponseEntity.badRequest().body("You have no remaining leaves. You have already used all " + TOTAL_ANNUAL_LEAVES + " annual leaves.");
+            return ResponseEntity.badRequest().body("You have no remaining leaves. You have already used all "
+                    + TOTAL_ANNUAL_LEAVES + " annual leaves.");
         }
 
         // Check if requested days exceed remaining leaves
         if (daysRequested > remainingLeaves) {
-            return ResponseEntity.badRequest().body("You are requesting " + daysRequested + " days but only have " + remainingLeaves + " leaves remaining.");
+            return ResponseEntity.badRequest().body("You are requesting " + daysRequested + " days but only have "
+                    + remainingLeaves + " leaves remaining.");
         }
 
         // Check for overlapping leave requests
@@ -239,7 +243,7 @@ public class EmployeeController {
         // Job & Work Info
         employee.setDepartment(dto.getDepartment());
         employee.setRole(dto.getRole());
-//        employee.setJoiningDate(dto.getJoiningDate());
+        // employee.setJoiningDate(dto.getJoiningDate());
         if (dto.getJoiningDate() != null && !dto.getJoiningDate().isBlank()) {
             try {
                 employee.setJoiningDate(LocalDate.parse(dto.getJoiningDate())); // expects "yyyy-MM-dd"
@@ -247,8 +251,7 @@ public class EmployeeController {
                 throw new ResponseStatusException(
                         HttpStatus.BAD_REQUEST,
                         "Invalid joiningDate format. Expected yyyy-MM-dd.",
-                        e
-                );
+                        e);
             }
         }
         employee.setManagerId(dto.getManagerId());

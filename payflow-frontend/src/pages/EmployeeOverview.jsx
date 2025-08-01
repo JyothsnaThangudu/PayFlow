@@ -50,6 +50,26 @@ const EmployeeOverview = () => {
         }
     };
 
+    // Handler to enable user
+    const handleEnableUser = async (username) => {
+        const confirm = window.confirm("Are you sure you want to enable this user?");
+        if (!confirm) return;
+
+        try {
+            const res = await axios.put(`http://localhost:8080/api/admin/enable-user`, {
+                username: username,
+            });
+
+            setPopup({ show: true, title: 'User Enabled', message: res.data.message || 'User has been enabled.', type: 'success' });
+            // Refresh user list
+            const updatedUsers = await axios.get('http://localhost:8080/api/admin/users');
+            setUsers(updatedUsers.data);
+        } catch (err) {
+            setPopup({ show: true, title: 'Failed', message: 'Failed to enable user', type: 'error' });
+            console.error(err);
+        }
+    };
+
     return (
         <div className="admin-dashboard-layout">
             {popup.show && (
@@ -158,6 +178,24 @@ const EmployeeOverview = () => {
                     box-shadow: 0 2px 8px rgba(239,108,0,0.10);
                     transform: translateY(-2px) scale(1.04);
                 }
+                .enable-btn {
+                    background: linear-gradient(90deg, #e8f5e8 60%, #c8e6c9 100%);
+                    color: #2e7d32;
+                    border: none;
+                    border-radius: 8px;
+                    padding: 7px 18px;
+                    font-weight: 600;
+                    font-size: 1rem;
+                    cursor: pointer;
+                    box-shadow: 0 1px 4px rgba(30,64,175,0.07);
+                    transition: background 0.18s, color 0.18s, box-shadow 0.18s, transform 0.15s;
+                }
+                .enable-btn:hover {
+                    background: linear-gradient(90deg, #c8e6c9 60%, #e8f5e8 100%);
+                    color: #1b5e20;
+                    box-shadow: 0 2px 8px rgba(46,125,50,0.10);
+                    transform: translateY(-2px) scale(1.04);
+                }
                 .disabled-text {
                     color: #a1a1aa;
                     font-weight: 600;
@@ -211,7 +249,9 @@ const EmployeeOverview = () => {
                                                 Disable
                                             </button>
                                         ) : (
-                                            <span className="disabled-text">Disabled</span>
+                                            <button className="enable-btn" onClick={() => handleEnableUser(user.username)}>
+                                                Enable
+                                            </button>
                                         )}
                                     </td>
                                 </tr>

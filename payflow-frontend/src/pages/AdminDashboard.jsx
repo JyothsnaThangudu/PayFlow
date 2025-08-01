@@ -4,8 +4,8 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import Sidebar from '../components/SidebarAdmin';
 import './AdminDashboard.css';
-import { FaEdit, FaBell, FaUserPlus, FaFileExport, FaBullhorn, FaSync } from 'react-icons/fa';
-import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import { FaEdit, FaBell, FaUserPlus, FaFileExport, FaBullhorn, FaSync, FaUserCheck } from 'react-icons/fa';
+import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend, CartesianGrid } from 'recharts';
 
 const AdminDashboard = () => {
     const navigate = useNavigate();
@@ -14,6 +14,8 @@ const AdminDashboard = () => {
     const [leaves, setLeaves] = useState([]);
     const [employeeCount, setEmployeeCount] = useState(0);
     const [loading, setLoading] = useState(true);
+    const [activityPage, setActivityPage] = useState(1);
+    const [activityPerPage] = useState(5);
 
     // Fetch users on component mount
     const [popup, setPopup] = useState({ show: false, title: '', message: '', type: 'success' });
@@ -33,7 +35,14 @@ const AdminDashboard = () => {
                 setUsers(usersRes.data);
                 setEmployees(employeesRes.data);
                 setLeaves(leavesRes.data);
-                setEmployeeCount(employeesRes.data.length);
+                // Filter employees to only count those with corresponding users
+                const validEmployees = employeesRes.data.filter(emp => 
+                    usersRes.data.some(user => user.name === emp.fullName)
+                );
+                setEmployeeCount(validEmployees.length);
+                
+                console.log('Valid employees:', validEmployees.length);
+                console.log('Users with EMPLOYEE role:', usersRes.data.filter(user => user.role?.toUpperCase() === 'EMPLOYEE').length);
                 
                 console.log('Users:', usersRes.data);
                 console.log('Employees:', employeesRes.data);
@@ -66,7 +75,14 @@ const AdminDashboard = () => {
             setUsers(usersRes.data);
             setEmployees(employeesRes.data);
             setLeaves(leavesRes.data);
-            setEmployeeCount(employeesRes.data.length);
+            // Filter employees to only count those with corresponding users
+            const validEmployees = employeesRes.data.filter(emp => 
+                usersRes.data.some(user => user.name === emp.fullName)
+            );
+            setEmployeeCount(validEmployees.length);
+            
+            console.log('Data refreshed - Valid employees:', validEmployees.length);
+            console.log('Users with EMPLOYEE role:', usersRes.data.filter(user => user.role?.toUpperCase() === 'EMPLOYEE').length);
             
             console.log('Data refreshed successfully');
         } catch (err) {
@@ -104,6 +120,11 @@ const AdminDashboard = () => {
     const totalPages = Math.ceil(users.length / rowsPerPage);
     const paginatedUsers = users.slice((currentPage - 1) * rowsPerPage, currentPage * rowsPerPage);
 
+    // Filter employees to only show those with corresponding user accounts
+    const validEmployees = employees.filter(emp => 
+        users.some(user => user.name === emp.fullName)
+    );
+
     // Dynamic data processing functions
     const getDynamicRoleDistribution = () => {
         if (!users.length) return [];
@@ -120,7 +141,7 @@ const AdminDashboard = () => {
     };
 
     const getDynamicMonthlyJoining = () => {
-        if (!employees.length) return [];
+        if (!validEmployees.length) return [];
         
         const currentYear = new Date().getFullYear();
         const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -129,7 +150,7 @@ const AdminDashboard = () => {
         const monthlyData = monthNames.map(month => ({ month, employees: 0 }));
         
         // Count employees by joining month
-        employees.forEach(emp => {
+        validEmployees.forEach(emp => {
             if (emp.joiningDate) {
                 try {
                     const joinDate = new Date(emp.joiningDate);
@@ -165,13 +186,13 @@ const AdminDashboard = () => {
             .slice(-5)
             .reverse()
             .map(leave => {
-                const emp = employees.find(e => e.id === leave.employeeId);
+                const emp = validEmployees.find(e => e.id === leave.employeeId);
                 const empName = emp ? emp.fullName : `Employee #${leave.employeeId}`;
                 return `${empName} ${leave.status === 'ACCEPTED' ? 'approved for' : 'applied for'} ${leave.type} leave`;
             });
         
         // Recent employee onboarding
-        const recentEmployees = employees
+        const recentEmployees = validEmployees
             .filter(emp => emp.joiningDate)
             .sort((a, b) => new Date(b.joiningDate) - new Date(a.joiningDate))
             .slice(0, 3)
@@ -198,22 +219,36 @@ const AdminDashboard = () => {
     const getSystemNotifications = () => {
         const notifications = [];
         
-        // Pending leave approvals
-        const pendingLeaves = leaves.filter(leave => leave.status === 'PENDING').length;
-        if (pendingLeaves > 0) {
-            notifications.push(`${pendingLeaves} pending leave approvals`);
-        }
-        
-        // Inactive users
+        // Warning alerts (medium priority)
         const inactiveUsers = users.filter(user => !user.active).length;
         if (inactiveUsers > 0) {
-            notifications.push(`${inactiveUsers} inactive user accounts`);
+            notifications.push({
+                id: 'inactive-users',
+                type: 'warning',
+                icon: '⚠️',
+                title: 'Inactive User Accounts',
+                message: `${inactiveUsers} user account${inactiveUsers > 1 ? 's are' : ' is'} currently disabled`,
+                timestamp: '2 hours ago'
+            });
         }
         
-        // Recent employee count
+        // Data inconsistency alerts
+        const orphanedEmployees = employees.length - validEmployees.length;
+        if (orphanedEmployees > 0) {
+            notifications.push({
+                id: 'data-inconsistency',
+                type: 'warning',
+                icon: '⚠️',
+                title: 'Data Inconsistency Detected',
+                message: `${orphanedEmployees} employee record${orphanedEmployees > 1 ? 's' : ''} without corresponding user account${orphanedEmployees > 1 ? 's' : ''}`,
+                timestamp: '1 hour ago'
+            });
+        }
+        
+        // Info alerts (low priority)
         const currentMonth = new Date().getMonth();
         const currentYear = new Date().getFullYear();
-        const thisMonthJoinings = employees.filter(emp => {
+        const thisMonthJoinings = validEmployees.filter(emp => {
             if (!emp.joiningDate) return false;
             try {
                 const joinDate = new Date(emp.joiningDate);
@@ -224,13 +259,29 @@ const AdminDashboard = () => {
         }).length;
         
         if (thisMonthJoinings > 0) {
-            notifications.push(`${thisMonthJoinings} new employees this month`);
+            notifications.push({
+                id: 'new-joinings',
+                type: 'info',
+                icon: '🎉',
+                title: 'New Team Members',
+                message: `${thisMonthJoinings} new employee${thisMonthJoinings > 1 ? 's' : ''} joined this month`,
+                timestamp: 'Today'
+            });
         }
         
-        // Default notifications if none exist
-        if (notifications.length === 0) {
-            notifications.push('All systems operational');
-            notifications.push('Employee data up to date');
+        // System health notifications
+        const totalActiveUsers = users.filter(user => user.active).length;
+        const systemHealth = totalActiveUsers > 0 ? 'Healthy' : 'Attention Required';
+        
+        if (systemHealth === 'Healthy' && notifications.length === 0) {
+            notifications.push({
+                id: 'system-healthy',
+                type: 'success',
+                icon: '✅',
+                title: 'All Systems Operational',
+                message: `${totalActiveUsers} active users, all systems running smoothly`,
+                timestamp: 'Just now'
+            });
         }
         
         return notifications;
@@ -242,10 +293,29 @@ const AdminDashboard = () => {
     const recentActivity = getDynamicRecentActivity();
     const notifications = getSystemNotifications();
 
+    // Pagination for Recent Activity
+    const totalActivityPages = Math.ceil(recentActivity.length / activityPerPage);
+    const paginatedActivity = recentActivity.slice(
+        (activityPage - 1) * activityPerPage,
+        activityPage * activityPerPage
+    );
+
     // For summary cards
     const hrUsers = users.filter(user => user.role?.toUpperCase() === 'HR');
     const managerUsers = users.filter(user => user.role?.toUpperCase() === 'MANAGER');
     const employeeUsers = users.filter(user => user.role?.toUpperCase() === 'EMPLOYEE');
+    
+    // Calculate active/inactive employees based on validEmployees and their corresponding user status
+    const activeEmployeeCount = validEmployees.filter(emp => {
+        const correspondingUser = users.find(user => user.name === emp.fullName && user.role?.toUpperCase() === 'EMPLOYEE');
+        return correspondingUser && correspondingUser.active;
+    }).length;
+    
+    const inactiveEmployeeCount = validEmployees.filter(emp => {
+        const correspondingUser = users.find(user => user.name === emp.fullName && user.role?.toUpperCase() === 'EMPLOYEE');
+        return correspondingUser && !correspondingUser.active;
+    }).length;
+    
     const activeHRs = hrUsers.filter(user => user.active).length;
     const inactiveHRs = hrUsers.filter(user => !user.active).length;
     const activeManagers = managerUsers.filter(user => user.active).length;
@@ -291,7 +361,13 @@ const AdminDashboard = () => {
             <main className="admin-dashboard-main" style={{ padding: '32px 36px 36px 36px', maxWidth: 1400, margin: '0 auto' }}>
                 {/* Header with Notifications Bell */}
                 <div className="admin-dashboard-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24, borderBottom: '1.5px solid #e5e7eb', paddingBottom: 18 }}>
-                    <h1>Admin Dashboard</h1>
+                    <h1 style={{ 
+                        fontSize: '1.75rem', 
+                        fontWeight: '600', 
+                        color: '#4f46e5',
+                        margin: 0,
+                        letterSpacing: '-0.025em'
+                    }}>Welcome Admin 👋</h1>
                     <div style={{ display: 'flex', alignItems: 'center', flex: 1, justifyContent: 'flex-end' }}>
                         {/* Quick Actions */}
                                 <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginRight: 24 }}>
@@ -340,19 +416,151 @@ const AdminDashboard = () => {
                                     position: 'absolute',
                                     top: 32,
                                     right: 0,
-                                    minWidth: 220,
+                                    minWidth: 320,
+                                    maxWidth: 400,
                                     background: '#fff',
-                                    boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
-                                    borderRadius: 8,
-                                    zIndex: 10,
-                                    padding: 8
+                                    boxShadow: '0 8px 32px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.08)',
+                                    borderRadius: 12,
+                                    zIndex: 1000,
+                                    padding: 0,
+                                    border: '1px solid #e1e8ed',
+                                    maxHeight: '70vh',
+                                    overflowY: 'auto'
                                 }}>
-                                    {notifications.length === 0 ? (
-                                        <div className="notification-item">No new notifications</div>
-                                    ) : (
-                                        notifications.map((note, idx) => (
-                                            <div className="notification-item" key={idx}>{note}</div>
-                                        ))
+                                    <div style={{
+                                        padding: '16px 20px 12px 20px',
+                                        borderBottom: '1px solid #f1f3f4',
+                                        background: '#fafbfc'
+                                    }}>
+                                        <div style={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'space-between'
+                                        }}>
+                                            <h4 style={{
+                                                margin: 0,
+                                                fontSize: '16px',
+                                                fontWeight: '600',
+                                                color: '#1a202c'
+                                            }}>Notifications</h4>
+                                            <span style={{
+                                                fontSize: '12px',
+                                                color: '#64748b',
+                                                background: '#e2e8f0',
+                                                padding: '2px 8px',
+                                                borderRadius: '12px',
+                                                fontWeight: '500'
+                                            }}>{notifications.length}</span>
+                                        </div>
+                                    </div>
+                                    <div style={{ padding: '8px 0' }}>
+                                        {notifications.length === 0 ? (
+                                            <div style={{
+                                                padding: '24px 20px',
+                                                textAlign: 'center',
+                                                color: '#64748b'
+                                            }}>
+                                                <div style={{ fontSize: '24px', marginBottom: '8px' }}>🔔</div>
+                                                <div>No new notifications</div>
+                                            </div>
+                                        ) : (
+                                            notifications.map((notification, idx) => (
+                                                <div key={notification.id} style={{
+                                                    padding: '12px 20px',
+                                                    borderBottom: idx < notifications.length - 1 ? '1px solid #f1f3f4' : 'none',
+                                                    cursor: 'pointer',
+                                                    transition: 'background-color 0.2s ease',
+                                                    position: 'relative'
+                                                }} 
+                                                className="enhanced-notification-item"
+                                                onMouseEnter={(e) => e.target.style.backgroundColor = '#f8fafc'}
+                                                onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}>
+                                                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
+                                                        <div style={{
+                                                            fontSize: '16px',
+                                                            lineHeight: '1',
+                                                            marginTop: '2px',
+                                                            minWidth: '20px'
+                                                        }}>
+                                                            {notification.icon}
+                                                        </div>
+                                                        <div style={{ flex: 1, minWidth: 0 }}>
+                                                            <div style={{
+                                                                fontSize: '14px',
+                                                                fontWeight: '600',
+                                                                color: '#1a202c',
+                                                                marginBottom: '4px',
+                                                                lineHeight: '1.3'
+                                                            }}>
+                                                                {notification.title}
+                                                            </div>
+                                                            <div style={{
+                                                                fontSize: '13px',
+                                                                color: '#4a5568',
+                                                                lineHeight: '1.4',
+                                                                marginBottom: '6px'
+                                                            }}>
+                                                                {notification.message}
+                                                            </div>
+                                                            <div style={{
+                                                                display: 'flex',
+                                                                alignItems: 'center',
+                                                                justifyContent: 'flex-start',
+                                                                marginTop: '8px'
+                                                            }}>
+                                                                <span style={{
+                                                                    fontSize: '11px',
+                                                                    color: '#64748b',
+                                                                    fontWeight: '500'
+                                                                }}>
+                                                                    {notification.timestamp}
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                        <div style={{
+                                                            width: '6px',
+                                                            height: '6px',
+                                                            borderRadius: '50%',
+                                                            backgroundColor: notification.type === 'critical' ? '#dc2626' : 
+                                                                           notification.type === 'warning' ? '#d97706' : 
+                                                                           notification.type === 'success' ? '#16a34a' : '#2563eb',
+                                                            marginTop: '8px',
+                                                            flexShrink: 0
+                                                        }}></div>
+                                                    </div>
+                                                </div>
+                                            ))
+                                        )}
+                                    </div>
+                                    {notifications.length > 0 && (
+                                        <div style={{
+                                            padding: '12px 20px',
+                                            borderTop: '1px solid #f1f3f4',
+                                            background: '#fafbfc'
+                                        }}>
+                                            <button style={{
+                                                width: '100%',
+                                                padding: '8px',
+                                                fontSize: '13px',
+                                                fontWeight: '600',
+                                                color: '#4f46e5',
+                                                background: 'none',
+                                                border: '1px solid #e0e7ff',
+                                                borderRadius: '6px',
+                                                cursor: 'pointer',
+                                                transition: 'all 0.2s'
+                                            }}
+                                            onMouseEnter={(e) => {
+                                                e.target.style.backgroundColor = '#e0e7ff';
+                                                e.target.style.borderColor = '#c7d2fe';
+                                            }}
+                                            onMouseLeave={(e) => {
+                                                e.target.style.backgroundColor = 'transparent';
+                                                e.target.style.borderColor = '#e0e7ff';
+                                            }}>
+                                                View All Notifications
+                                            </button>
+                                        </div>
                                     )}
                                 </div>
                             </div>
@@ -540,161 +748,208 @@ const AdminDashboard = () => {
                 }
                 `}</style>
 
-                {/* Summary Cards */}
-                {/*<div className="admin-card-grid">*/}
-                {/*    <div className="admin-card highlight-card">*/}
-                {/*        <h2 className="admin-section-title">TOTAL HRs</h2>*/}
-                {/*        <div className="admin-count">{hrUsers.length}</div>*/}
-                {/*        <div className="stats">*/}
-                {/*            <span>Active: {activeHRs}</span>*/}
-                {/*            <span>Inactive: {inactiveHRs}</span>*/}
-                {/*        </div>*/}
-                {/*    </div>*/}
-                {/*    <div className="admin-card highlight-card">*/}
-                {/*        <h2 className="admin-section-title">TOTAL MANAGERS</h2>*/}
-                {/*        <div className="admin-count">{managerUsers.length}</div>*/}
-                {/*        <div className="stats">*/}
-                {/*            <span>Active: {activeManagers}</span>*/}
-                {/*            <span>Inactive: {inactiveManagers}</span>*/}
-                {/*        </div>*/}
-                {/*    </div>*/}
-                {/*    <div className="admin-card highlight-card">*/}
-                {/*        <h2 className="admin-section-title">TOTAL EMPLOYEES</h2>*/}
-                {/*        <div className="admin-count">{employeeCount}</div>*/}
-                {/*        <div className="stats">*/}
-                {/*            <span>Active: {employeeUsers.filter(u => u.active).length}</span>*/}
-                {/*            <span>Inactive: {employeeUsers.filter(u => !u.active).length}</span>*/}
-                {/*        </div>*/}
-                {/*    </div>*/}
-                {/*    <div className="admin-card info-card">*/}
-                {/*        <h2 className="admin-section-title">Pending Leave Requests</h2>*/}
-                {/*        <div className="admin-count">{leaves.filter(leave => leave.status === 'PENDING').length}</div>*/}
-                {/*        <div className="stats">*/}
-                {/*            <span>Approved: {leaves.filter(leave => leave.status === 'ACCEPTED').length}</span>*/}
-                {/*        </div>*/}
-                {/*    </div>*/}
-                {/*    <div className="admin-card info-card">*/}
-                {/*        <h2 className="admin-section-title">New Joinings This Month</h2>*/}
-                {/*        <div className="admin-count">*/}
-                {/*            {(() => {*/}
-                {/*                const currentMonth = new Date().getMonth();*/}
-                {/*                const currentYear = new Date().getFullYear();*/}
-                {/*                return employees.filter(emp => {*/}
-                {/*                    if (!emp.joiningDate) return false;*/}
-                {/*                    try {*/}
-                {/*                        const joinDate = new Date(emp.joiningDate);*/}
-                {/*                        return joinDate.getMonth() === currentMonth && joinDate.getFullYear() === currentYear;*/}
-                {/*                    } catch {*/}
-                {/*                        return false;*/}
-                {/*                    }*/}
-                {/*                }).length;*/}
-                {/*            })()}*/}
-                {/*        </div>*/}
-                {/*        <div className="stats">*/}
-                {/*            <span>Total: {employees.length}</span>*/}
-                {/*        </div>*/}
-                {/*    </div>*/}
-                {/*</div>*/}
-
-                {/* Summary Cards */}
-                <div className="summary-cards-row">
-                    <div className="admin-card highlight-card">
-                        <h2 className="admin-section-title">TOTAL HRs</h2>
-                        <div className="admin-count">{hrUsers.length}</div>
-                        <div className="stats">
-                            <span>Active: {activeHRs}</span>
-                            <span>Inactive: {inactiveHRs}</span>
+                {/* Enhanced Summary Cards */}
+                <div className="enhanced-summary-grid">
+                    <div className="enhanced-card primary-card">
+                        <div className="card-icon hr-icon">
+                            <FaUserPlus />
+                        </div>
+                        <div className="card-content">
+                            <h3 className="card-title hr-title">HR Personnel</h3>
+                            <div className="card-number">{hrUsers.length}</div>
+                            <div className="card-stats">
+                                <span className="stat-item active">
+                                    <span className="stat-dot active"></span>
+                                    Active: {activeHRs}
+                                </span>
+                                <span className="stat-item inactive">
+                                    <span className="stat-dot inactive"></span>
+                                    Inactive: {inactiveHRs}
+                                </span>
+                            </div>
                         </div>
                     </div>
-                    <div className="admin-card highlight-card">
-                        <h2 className="admin-section-title">TOTAL MANAGERS</h2>
-                        <div className="admin-count">{managerUsers.length}</div>
-                        <div className="stats">
-                            <span>Active: {activeManagers}</span>
-                            <span>Inactive: {inactiveManagers}</span>
+                    
+                    <div className="enhanced-card secondary-card">
+                        <div className="card-icon manager-icon">
+                            <FaUserPlus />
+                        </div>
+                        <div className="card-content">
+                            <h3 className="card-title manager-title">Managers</h3>
+                            <div className="card-number">{managerUsers.length}</div>
+                            <div className="card-stats">
+                                <span className="stat-item active">
+                                    <span className="stat-dot active"></span>
+                                    Active: {activeManagers}
+                                </span>
+                                <span className="stat-item inactive">
+                                    <span className="stat-dot inactive"></span>
+                                    Inactive: {inactiveManagers}
+                                </span>
+                            </div>
                         </div>
                     </div>
-                    <div className="admin-card highlight-card">
-                        <h2 className="admin-section-title">TOTAL EMPLOYEES</h2>
-                        <div className="admin-count">{employeeCount}</div>
-                        <div className="stats">
-                            <span>Active: {employeeUsers.filter(u => u.active).length}</span>
-                            <span>Inactive: {employeeUsers.filter(u => !u.active).length}</span>
+                    
+                    <div className="enhanced-card accent-card">
+                        <div className="card-icon employee-icon">
+                            <FaUserPlus />
+                        </div>
+                        <div className="card-content">
+                            <h3 className="card-title employee-count-title">Total Employees</h3>
+                            <div className="card-number">{employeeCount}</div>
+                            <div className="card-stats">
+                                <span className="stat-item active">
+                                    <span className="stat-dot active"></span>
+                                    Active: {activeEmployeeCount}
+                                </span>
+                                <span className="stat-item inactive">
+                                    <span className="stat-dot inactive"></span>
+                                    Inactive: {inactiveEmployeeCount}
+                                </span>
+                            </div>
                         </div>
                     </div>
-                    <div className="admin-card info-card">
-                        <h2 className="admin-section-title">Pending Leave Requests</h2>
-                        <div className="admin-count">{leaves.filter(leave => leave.status === 'PENDING').length}</div>
-                        <div className="stats">
-                            <span>Approved: {leaves.filter(leave => leave.status === 'ACCEPTED').length}</span>
+                    
+                    <div className="enhanced-card info-card">
+                        <div className="card-icon leave-icon">
+                            <FaBell />
+                        </div>
+                        <div className="card-content">
+                            <h3 className="card-title leave-title">Leave Requests</h3>
+                            <div className="card-number">{leaves.filter(leave => leave.status === 'PENDING').length}</div>
+                            <div className="card-stats">
+                                <span className="stat-item approved">
+                                    <span className="stat-dot approved"></span>
+                                    Approved: {leaves.filter(leave => leave.status === 'ACCEPTED').length}
+                                </span>
+                            </div>
                         </div>
                     </div>
-                    <div className="admin-card info-card">
-                        <h2 className="admin-section-title">New Joinings This Month</h2>
-                        <div className="admin-count">
-                            {(() => {
-                                const currentMonth = new Date().getMonth();
-                                const currentYear = new Date().getFullYear();
-                                return employees.filter(emp => {
-                                    if (!emp.joiningDate) return false;
-                                    try {
-                                        const joinDate = new Date(emp.joiningDate);
-                                        return joinDate.getMonth() === currentMonth && joinDate.getFullYear() === currentYear;
-                                    } catch {
-                                        return false;
-                                    }
-                                }).length;
-                            })()}
+                    
+                    <div className="enhanced-card success-card">
+                        <div className="card-icon joining-icon">
+                            <FaUserPlus />
                         </div>
-                        <div className="stats">
-                            <span>Total: {employees.length}</span>
+                        <div className="card-content">
+                            <h3 className="card-title joining-title">New Joinings This Month</h3>
+                            <div className="card-number">
+                                {(() => {
+                                    const currentMonth = new Date().getMonth();
+                                    const currentYear = new Date().getFullYear();
+                                    return validEmployees.filter(emp => {
+                                        if (!emp.joiningDate) return false;
+                                        try {
+                                            const joinDate = new Date(emp.joiningDate);
+                                            return joinDate.getMonth() === currentMonth && joinDate.getFullYear() === currentYear;
+                                        } catch {
+                                            return false;
+                                        }
+                                    }).length;
+                                })()}
+                            </div>
+                            <div className="card-stats">
+                                <span className="stat-item total">
+                                    <span className="stat-dot total"></span>
+                                    Total: {validEmployees.length}
+                                </span>
+                            </div>
                         </div>
                     </div>
                 </div>
 
 
                 {/* Charts & Visualizations */}
-                <div className="dashboard-charts-row">
-                    <div className="dashboard-chart-card">
-                        <h3>Role Distribution</h3>
+                <div className="charts-section">
+                    <div className="chart-container">
+                        <div className="chart-header">
+                            <h3 className="chart-title">
+                                <span className="chart-icon">👥</span>
+                                Role Distribution
+                            </h3>
+                            <p className="chart-subtitle">Current organizational structure breakdown</p>
+                        </div>
                         {rolePieData.length > 0 ? (
-                            <ResponsiveContainer width="100%" height={220}>
+                            <ResponsiveContainer width="100%" height={350}>
                                 <PieChart>
-                                    <Pie data={rolePieData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={70} label>
+                                    <Pie 
+                                        data={rolePieData} 
+                                        dataKey="value" 
+                                        nameKey="name" 
+                                        cx="50%" 
+                                        cy="50%" 
+                                        outerRadius={100} 
+                                        label={({name, value, percent}) => 
+                                            `${name}: ${value} (${(percent * 100).toFixed(0)}%)`
+                                        }
+                                    >
                                         {rolePieData.map((entry, idx) => (
                                             <Cell key={`cell-${idx}`} fill={pieColors[idx % pieColors.length]} />
                                         ))}
                                     </Pie>
                                     <Legend />
-                                    <Tooltip />
+                                    <Tooltip 
+                                        contentStyle={{
+                                            backgroundColor: 'white',
+                                            border: '1px solid #e1e8ee',
+                                            borderRadius: '8px',
+                                            boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+                                        }}
+                                    />
                                 </PieChart>
                             </ResponsiveContainer>
                         ) : (
-                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '220px', color: '#64748b' }}>
-                                <div style={{ textAlign: 'center' }}>
-                                    <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>📊</div>
-                                    <div>No role data available</div>
+                            <div className="chart-empty-state">
+                                <div className="chart-empty-content">
+                                    <div className="chart-empty-icon">👥</div>
+                                    <div className="chart-empty-title">No Role Data Available</div>
+                                    <div className="chart-empty-description">Add users to see role distribution</div>
                                 </div>
                             </div>
                         )}
                     </div>
-                    <div className="dashboard-chart-card">
-                        <h3>Employees Joined This Year</h3>
+                    <div className="chart-container">
+                        <div className="chart-header">
+                            <h3 className="chart-title">
+                                <span className="chart-icon">📈</span>
+                                Monthly Hiring Trends
+                            </h3>
+                            <p className="chart-subtitle">Employee onboarding statistics for {new Date().getFullYear()}</p>
+                        </div>
                         {barData.some(item => item.employees > 0) ? (
-                            <ResponsiveContainer width="100%" height={220}>
-                                <BarChart data={barData} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
-                                    <XAxis dataKey="month" />
-                                    <YAxis />
-                                    <Tooltip />
+                            <ResponsiveContainer width="100%" height={350}>
+                                <BarChart data={barData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                                    <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                                    <XAxis 
+                                        dataKey="month" 
+                                        stroke="#666"
+                                        fontSize={12}
+                                    />
+                                    <YAxis 
+                                        stroke="#666"
+                                        fontSize={12}
+                                    />
+                                    <Tooltip 
+                                        contentStyle={{
+                                            backgroundColor: 'white',
+                                            border: '1px solid #e1e8ee',
+                                            borderRadius: '8px',
+                                            boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+                                        }}
+                                    />
                                     <Legend />
-                                    <Bar dataKey="employees" fill="#8884d8" />
+                                    <Bar 
+                                        dataKey="employees" 
+                                        fill="#667eea"
+                                        radius={[4, 4, 0, 0]}
+                                    />
                                 </BarChart>
                             </ResponsiveContainer>
                         ) : (
-                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '220px', color: '#64748b' }}>
-                                <div style={{ textAlign: 'center' }}>
-                                    <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>📈</div>
-                                    <div>No joining data for this year</div>
+                            <div className="chart-empty-state">
+                                <div className="chart-empty-content">
+                                    <div className="chart-empty-icon">📈</div>
+                                    <div className="chart-empty-title">No Hiring Data for {new Date().getFullYear()}</div>
+                                    <div className="chart-empty-description">Employee joining data will appear here once available</div>
                                 </div>
                             </div>
                         )}
@@ -702,39 +957,63 @@ const AdminDashboard = () => {
                 </div>
 
                 {/* Recent Activity Feed */}
-                <div className="dashboard-activity-feed">
-                    <h3>Recent Activity</h3>
-                    <ul className="activity-list">
+                <div className="recent-activity-card">
+                    <div className="chart-header" style={{marginBottom: '20px'}}>
+                        <h3 className="chart-title">
+                            <FaBell style={{color: '#3b82f6'}} />
+                            Recent System Activity
+                        </h3>
+                        <p className="chart-subtitle">Latest updates and events in your organization</p>
+                    </div>
+                    <div className="activity-feed">
                         {recentActivity.length === 0 ? (
-                            <li>No recent activity</li>
+                            <div className="activity-item">
+                                <div className="activity-icon">
+                                    <FaBell />
+                                </div>
+                                <div className="activity-content">
+                                    <p>No recent activity</p>
+                                    <div className="activity-time">Check back later</div>
+                                </div>
+                            </div>
                         ) : (
-                            recentActivity.map((item, idx) => (
-                                <li key={idx} style={{ 
-                                    padding: '0.5rem 0', 
-                                    borderBottom: idx < recentActivity.length - 1 ? '1px solid #f1f5f9' : 'none',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '0.5rem'
-                                }}>
-                                    <div style={{
-                                        width: '8px',
-                                        height: '8px',
-                                        borderRadius: '50%',
-                                        background: '#4f46e5',
-                                        flexShrink: 0
-                                    }}></div>
-                                    <span>{item}</span>
-                                    <span style={{ 
-                                        fontSize: '0.75rem', 
-                                        color: '#64748b',
-                                        marginLeft: 'auto'
-                                    }}>
-                                        {idx < 3 ? 'Recent' : (idx < 6 ? 'Today' : 'This week')}
-                                    </span>
-                                </li>
+                            paginatedActivity.map((item, idx) => (
+                                <div key={idx} className="activity-item">
+                                    <div className="activity-icon">
+                                        {idx % 3 === 0 ? <FaUserPlus /> : idx % 3 === 1 ? <FaBell /> : <FaUserCheck />}
+                                    </div>
+                                    <div className="activity-content">
+                                        <p>{item}</p>
+                                        <div className="activity-time">
+                                            {idx < 3 ? 'Just now' : (idx < 6 ? 'Today' : 'This week')}
+                                        </div>
+                                    </div>
+                                </div>
                             ))
                         )}
-                    </ul>
+                    </div>
+                    {/* Activity Pagination */}
+                    {recentActivity.length > activityPerPage && (
+                        <div className="pagination-controls">
+                            <button 
+                                className="pagination-button"
+                                onClick={() => setActivityPage(prev => Math.max(prev - 1, 1))}
+                                disabled={activityPage === 1}
+                            >
+                                Previous
+                            </button>
+                            <span className="pagination-info">
+                                Page {activityPage} of {totalActivityPages}
+                            </span>
+                            <button 
+                                className="pagination-button"
+                                onClick={() => setActivityPage(prev => Math.min(prev + 1, totalActivityPages))}
+                                disabled={activityPage === totalActivityPages}
+                            >
+                                Next
+                            </button>
+                        </div>
+                    )}
                 </div>
             </main>
         </div>

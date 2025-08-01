@@ -6,8 +6,6 @@ import com.payflowapi.repository.EmployeeRepository;
 import com.payflowapi.repository.AnnouncementRepository;
 import com.payflowapi.repository.CalendarEventRepository;
 import com.payflowapi.repository.EmployeeLeaveRepository;
-import com.payflowapi.repository.OnboardingRepository;
-import com.payflowapi.repository.OnboardingCandidateRepository;
 import com.payflowapi.repository.ProjectRepository;
 import com.payflowapi.repository.ProjectTeamMemberRepository;
 import com.payflowapi.repository.PayrollRepository;
@@ -15,8 +13,6 @@ import com.payflowapi.entity.Employee;
 import com.payflowapi.entity.Announcement;
 import com.payflowapi.entity.CalendarEvent;
 import com.payflowapi.entity.EmployeeLeave;
-import com.payflowapi.entity.Onboarding;
-import com.payflowapi.entity.OnboardingCandidate;
 import com.payflowapi.entity.Project;
 import com.payflowapi.entity.ProjectTeamMember;
 import com.payflowapi.entity.Payroll;
@@ -39,10 +35,6 @@ public class HrDashboardController {
         private CalendarEventRepository calendarEventRepository;
         @Autowired
         private EmployeeLeaveRepository employeeLeaveRepository;
-        @Autowired
-        private OnboardingRepository onboardingRepository;
-        @Autowired
-        private OnboardingCandidateRepository onboardingCandidateRepository;
         @Autowired
         private ProjectRepository projectRepository;
         @Autowired
@@ -92,7 +84,6 @@ public class HrDashboardController {
                 return list;
         }
 
-
         @GetMapping("/onboarding/summary")
         public List<OnboardedEmployeeSummaryDTO> getRecentOnboardings() {
                 LocalDate cutoff = LocalDate.now().minusDays(30);
@@ -100,9 +91,9 @@ public class HrDashboardController {
 
                 // Collect all manager IDs to avoid N+1
                 Set<Long> managerIds = employees.stream()
-                        .map(Employee::getManagerId)
-                        .filter(Objects::nonNull)
-                        .collect(Collectors.toSet());
+                                .map(Employee::getManagerId)
+                                .filter(Objects::nonNull)
+                                .collect(Collectors.toSet());
 
                 // Fetch managers in one go
                 Map<Long, String> managerNameMap = new HashMap<>();
@@ -130,50 +121,51 @@ public class HrDashboardController {
                 }).toList();
         }
 
-
-//        @GetMapping("/onboarding/summary")
-//        public List<OnboardedEmployeeSummaryDTO> getRecentOnboardings() {
-//                // e.g., last 30 days; adjust criteria as needed
-//                LocalDate cutoff = LocalDate.now().minusDays(30);
-//                List<Employee> employees = employeeRepository.findByJoiningDateAfter(cutoff);
-//
-//                return employees.stream().map(emp -> {
-//                        OnboardedEmployeeSummaryDTO dto = new OnboardedEmployeeSummaryDTO();
-//                        dto.setFullName(emp.getFullName());
-//                        dto.setDepartment(emp.getDepartment());
-//                        dto.setRole(emp.getRole());
-//                        dto.setJoiningDate(emp.getJoiningDate().toString());
-//                        // resolve manager name if needed
-//                        // dto.setManagerName(...);
-//                        dto.setStatus("Active");
-//                        return dto;
-//                }).toList();
-//        }
+        // @GetMapping("/onboarding/summary")
+        // public List<OnboardedEmployeeSummaryDTO> getRecentOnboardings() {
+        // // e.g., last 30 days; adjust criteria as needed
+        // LocalDate cutoff = LocalDate.now().minusDays(30);
+        // List<Employee> employees = employeeRepository.findByJoiningDateAfter(cutoff);
+        //
+        // return employees.stream().map(emp -> {
+        // OnboardedEmployeeSummaryDTO dto = new OnboardedEmployeeSummaryDTO();
+        // dto.setFullName(emp.getFullName());
+        // dto.setDepartment(emp.getDepartment());
+        // dto.setRole(emp.getRole());
+        // dto.setJoiningDate(emp.getJoiningDate().toString());
+        // // resolve manager name if needed
+        // // dto.setManagerName(...);
+        // dto.setStatus("Active");
+        // return dto;
+        // }).toList();
+        // }
 
         // --- Onboarding Summary ---
-//        @GetMapping("/onboarding/summary")
-//        public List<Map<String, Object>> getOnboardingSummary() {
-//                List<Map<String, Object>> list = new ArrayList<>();
-//                List<Onboarding> onboardings = onboardingRepository.findAll();
-//                for (Onboarding onboarding : onboardings) {
-//                        List<Map<String, String>> candidatesList = new ArrayList<>();
-//                        List<OnboardingCandidate> candidates = onboardingCandidateRepository.findAll();
-//                        for (OnboardingCandidate candidate : candidates) {
-//                                if (candidate.getOnboardingId() != null
-//                                                && candidate.getOnboardingId().equals(onboarding.getId())) {
-//                                        candidatesList.add(Map.of("avatar", candidate.getAvatar()));
-//                                }
-//                        }
-//                        list.add(Map.of(
-//                                        "code", onboarding.getCode(),
-//                                        "position", onboarding.getPosition(),
-//                                        "candidates", candidatesList,
-//                                        "deadline",
-//                                        onboarding.getDeadline() != null ? onboarding.getDeadline().toString() : "N/A",
-//                                        "status", onboarding.getStatus()));
-//                }
-//                return list;
-//        }
+        // @GetMapping("/onboarding/summary")
+        // public List<Map<String, Object>> getOnboardingSummary() {
+        // List<Map<String, Object>> list = new ArrayList<>();
+        // List<Onboarding> onboardings = onboardingRepository.findAll();
+        // for (Onboarding onboarding : onboardings) {
+        // List<Map<String, String>> candidatesList = new ArrayList<>();
+        // List<OnboardingCandidate> candidates =
+        // onboardingCandidateRepository.findAll();
+        // for (OnboardingCandidate candidate : candidates) {
+        // if (candidate.getOnboardingId() != null
+        // && candidate.getOnboardingId().equals(onboarding.getId())) {
+        // candidatesList.add(Map.of("avatar", candidate.getAvatar()));
+        // }
+        // }
+        // list.add(Map.of(
+        // "code", onboarding.getCode(),
+        // "position", onboarding.getPosition(),
+        // "candidates", candidatesList,
+        // "deadline",
+        // onboarding.getDeadline() != null ? onboarding.getDeadline().toString() :
+        // "N/A",
+        // "status", onboarding.getStatus()));
+        // }
+        // return list;
+        // }
 
         // --- Project Summary ---
         @GetMapping("/projects/summary")
@@ -206,44 +198,41 @@ public class HrDashboardController {
 
                 if (allPayrolls.isEmpty()) {
                         return Map.of(
-                                "totalPaid", 0.0,
-                                "pending", 0.0,
-                                "cycle", "N/A"
-                        );
+                                        "totalPaid", 0.0,
+                                        "pending", 0.0,
+                                        "cycle", "N/A");
                 }
 
                 // Get latest cycle by comparing strings like "2025-07"
                 String latestCycle = allPayrolls.stream()
-                        .map(Payroll::getCycle)
-                        .filter(c -> c != null && !c.isBlank())
-                        .max(String::compareTo)
-                        .orElse("N/A");
+                                .map(Payroll::getCycle)
+                                .filter(c -> c != null && !c.isBlank())
+                                .max(String::compareTo)
+                                .orElse("N/A");
 
                 List<Payroll> latestCyclePayrolls = allPayrolls.stream()
-                        .filter(p -> latestCycle.equals(p.getCycle()))
-                        .toList();
+                                .filter(p -> latestCycle.equals(p.getCycle()))
+                                .toList();
 
                 double totalPaid = latestCyclePayrolls.stream()
-                        .filter(p -> "Paid".equalsIgnoreCase(p.getStatus()))
-                        .mapToDouble(Payroll::getNetSalary)
-                        .sum();
+                                .filter(p -> "Paid".equalsIgnoreCase(p.getStatus()))
+                                .mapToDouble(Payroll::getNetSalary)
+                                .sum();
 
                 double pending = latestCyclePayrolls.stream()
-                        .filter(p -> {
-                                String status = p.getStatus();
-                                return "Pending".equalsIgnoreCase(status) || "Scheduled".equalsIgnoreCase(status);
-                        })
-                        .mapToDouble(Payroll::getNetSalary)
-                        .sum();
-
+                                .filter(p -> {
+                                        String status = p.getStatus();
+                                        return "Pending".equalsIgnoreCase(status)
+                                                        || "Scheduled".equalsIgnoreCase(status);
+                                })
+                                .mapToDouble(Payroll::getNetSalary)
+                                .sum();
 
                 return Map.of(
-                        "totalPaid", totalPaid,
-                        "pending", pending,
-                        "cycle", latestCycle
-                );
+                                "totalPaid", totalPaid,
+                                "pending", pending,
+                                "cycle", latestCycle);
         }
-
 
         @GetMapping("/payroll/table")
         public List<Map<String, Object>> getPayrollTable() {
@@ -251,43 +240,40 @@ public class HrDashboardController {
                 List<Payroll> payrolls = payrollRepository.findAll();
 
                 for (Payroll p : payrolls) {
-                        Long empId = p.getEmployeeId();  // ✅ Access employee_id
+                        Long empId = p.getEmployeeId(); // ✅ Access employee_id
                         Optional<Employee> optionalEmp = employeeRepository.findById(empId);
                         Employee emp = optionalEmp.orElse(null);
 
                         list.add(Map.of(
-                                "employee", emp != null ? emp.getFullName() : "-",
-                                "department", p.getDepartment() != null ? p.getDepartment() : "-",
-                                "netSalary", p.getNetSalary(),
-                                "status", p.getStatus(),
-                                "paymentDate", p.getPaymentDate() != null ? p.getPaymentDate().toString() : "-"
-                        ));
+                                        "employee", emp != null ? emp.getFullName() : "-",
+                                        "department", p.getDepartment() != null ? p.getDepartment() : "-",
+                                        "netSalary", p.getNetSalary(),
+                                        "status", p.getStatus(),
+                                        "paymentDate",
+                                        p.getPaymentDate() != null ? p.getPaymentDate().toString() : "-"));
                 }
 
                 return list;
         }
 
-
-
-
         // --- Payroll Table ---
-//        @GetMapping("/payroll/table")
-//        public List<Map<String, Object>> getPayrollTable() {
-//                // Example: Use employee table for payroll rows (fake salary)
-//                List<Map<String, Object>> list = new ArrayList<>();
-//                List<Employee> employees = employeeRepository.findAll();
-//                int i = 0;
-//                for (Employee e : employees) {
-//                        list.add(Map.of(
-//                                        "employee", e.getFullName(),
-//                                        "department", e.getDepartment() == null ? "-" : e.getDepartment(),
-//                                        "netSalary", 40000 + (i * 1000),
-//                                        "status", (i % 2 == 0 ? "Paid" : "Pending"),
-//                                        "paymentDate", (i % 2 == 0 ? "02/07/2025" : "-")));
-//                        i++;
-//                }
-//                return list;
-//        }
+        // @GetMapping("/payroll/table")
+        // public List<Map<String, Object>> getPayrollTable() {
+        // // Example: Use employee table for payroll rows (fake salary)
+        // List<Map<String, Object>> list = new ArrayList<>();
+        // List<Employee> employees = employeeRepository.findAll();
+        // int i = 0;
+        // for (Employee e : employees) {
+        // list.add(Map.of(
+        // "employee", e.getFullName(),
+        // "department", e.getDepartment() == null ? "-" : e.getDepartment(),
+        // "netSalary", 40000 + (i * 1000),
+        // "status", (i % 2 == 0 ? "Paid" : "Pending"),
+        // "paymentDate", (i % 2 == 0 ? "02/07/2025" : "-")));
+        // i++;
+        // }
+        // return list;
+        // }
 
         // --- Gender Stats ---
         @GetMapping("/employee/gender-stats")

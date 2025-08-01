@@ -1,84 +1,329 @@
-.navbar button {
-    background-color: #4b6cb7; /* Blue gradient base */
-    background-image: linear-gradient(to right, #4f46e5, #4b6cb7);
-    color: #fff;
-    border: none;
-    padding: 8px 16px;
-    border-radius: 8px;
-    font-weight: bold;
-    cursor: pointer;
-    transition: background 0.3s ease, transform 0.2s ease;
-}
-
-.navbar button:hover {
-    background-image: linear-gradient(to right, #4b6cb7, #182848);
-    transform: scale(1.05);
-}
-
-.navbar-right {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-
-
 .navbar {
+    background: linear-gradient(135deg, #4f46e5 0%, #3730a3 100%);
+    color: white;
+    padding: 0;
+    font-family: 'Segoe UI', Roboto, Arial, sans-serif;
+    box-shadow: 0 4px 24px rgba(79, 70, 229, 0.15);
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.navbar-container {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background-color: #4f46e5;
-    color: white;
-    padding: 16px 30px;
-    font-family: 'Segoe UI', sans-serif;
+    padding: 16px 32px;
+    max-width: 1400px;
+    margin: 0 auto;
 }
 
 .navbar-left {
+    display: flex;
+    align-items: center;
+}
+
+.brand-container {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.brand-container:hover {
+    transform: translateY(-1px);
+}
+
+.brand-icon {
+    width: 44px;
+    height: 44px;
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    color: white;
+    box-shadow: 0 6px 20px rgba(16, 185, 129, 0.3);
+    animation: glow 3s ease-in-out infinite alternate;
+}
+
+@keyframes glow {
+    from {
+        box-shadow: 0 6px 20px rgba(16, 185, 129, 0.3);
+    }
+    to {
+        box-shadow: 0 6px 20px rgba(16, 185, 129, 0.6);
+    }
+}
+
+.brand-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.brand-name {
     font-size: 24px;
-    font-weight: bold;
+    font-weight: 800;
+    background: linear-gradient(135deg, #ffffff 0%, #e0e7ff 100%);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    letter-spacing: -0.025em;
+}
+
+.brand-tagline {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.7);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
 }
 
 .navbar-right {
-    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 16px;
 }
 
-.dropdown-toggle {
-    background: transparent;
-    color: white;
-    font-size: 16px;
-    padding: 10px 16px;
-    border: none;
-    cursor: pointer;
-    font-weight: 500;
+.navbar-info {
+    display: flex;
+    align-items: center;
+    gap: 16px;
 }
 
-.dropdown-toggle:hover {
-    text-decoration: underline;
-}
-
-.dropdown-menu {
-    position: absolute;
-    right: 0;
-    top: 45px;
-    background-color: white;
+.datetime-display {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background: rgba(255, 255, 255, 0.1);
     border-radius: 10px;
-    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
-    overflow: hidden;
-    z-index: 1000;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transition: all 0.3s ease;
 }
 
-.dropdown-menu button {
-    display: block;
-    width: 100%;
-    padding: 12px 20px;
-    text-align: left;
-    background: white;
-    border: none;
-    font-size: 15px;
+.datetime-display:hover {
+    background: rgba(255, 255, 255, 0.15);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.clock-icon {
+    font-size: 14px;
+    color: #10b981;
+    animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.7;
+    }
+}
+
+.datetime-text {
+    font-size: 13px;
+    font-weight: 600;
+    color: #ffffff;
+    letter-spacing: 0.025em;
+    font-family: 'Courier New', monospace;
+}
+
+.user-section {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.user-profile {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 16px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
     cursor: pointer;
-    color: #333;
+    transition: all 0.3s ease;
+    border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.dropdown-menu button:hover {
-    background-color: #f0f0f0;
+.user-profile:hover {
+    background: rgba(255, 255, 255, 0.15);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.user-avatar {
+    width: 32px;
+    height: 32px;
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    color: white;
+    box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+}
+
+.user-info {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+}
+
+.user-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: #ffffff;
+    line-height: 1.2;
+}
+
+.user-role {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.7);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.dropdown-arrow {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.6);
+    transition: transform 0.3s ease;
+}
+
+.user-profile:hover .dropdown-arrow {
+    transform: rotate(180deg);
+}
+
+.nav-button {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    text-transform: none;
+    letter-spacing: 0.025em;
+}
+
+.login-button {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+.login-button:hover {
+    background: linear-gradient(135deg, #059669 0%, #047857 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+}
+
+.logout-button {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    color: white;
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+}
+
+.logout-button:hover {
+    background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4);
+}
+
+.nav-button:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .navbar-container {
+        padding: 12px 20px;
+    }
+    
+    .brand-name {
+        font-size: 20px;
+    }
+    
+    .brand-tagline {
+        display: none;
+    }
+    
+    .datetime-display {
+        padding: 6px 12px;
+    }
+    
+    .datetime-text {
+        font-size: 11px;
+    }
+    
+    .user-info {
+        display: none;
+    }
+    
+    .dropdown-arrow {
+        display: none;
+    }
+    
+    .nav-button span {
+        display: none;
+    }
+    
+    .nav-button {
+        padding: 10px;
+        min-width: 40px;
+        justify-content: center;
+    }
+}
+
+@media (max-width: 480px) {
+    .brand-container {
+        gap: 8px;
+    }
+    
+    .brand-icon {
+        width: 36px;
+        height: 36px;
+        font-size: 16px;
+    }
+    
+    .brand-name {
+        font-size: 18px;
+    }
+    
+    .datetime-display {
+        padding: 4px 8px;
+        gap: 4px;
+    }
+    
+    .datetime-text {
+        font-size: 10px;
+        display: none; /* Hide full datetime on very small screens */
+    }
+    
+    .clock-icon {
+        font-size: 16px;
+    }
+    
+    .user-profile {
+        padding: 6px 12px;
+    }
+    
+    .user-avatar {
+        width: 28px;
+        height: 28px;
+        font-size: 12px;
+    }
 }

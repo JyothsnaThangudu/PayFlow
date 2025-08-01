@@ -17,7 +17,7 @@ public class Employee {
     private String dob;
     private String gender;
     @Column(name = "joining_date")
-//    private String joiningDate;
+    // private String joiningDate;
     private LocalDate joiningDate;
 
     private String address;
@@ -55,6 +55,11 @@ public class Employee {
     private String skills;
     private String languages;
 
-    public LocalDate getJoiningDate() { return joiningDate; }
-    public void setJoiningDate(LocalDate joiningDate) { this.joiningDate = joiningDate; }
+    public LocalDate getJoiningDate() {
+        return joiningDate;
+    }
+
+    public void setJoiningDate(LocalDate joiningDate) {
+        this.joiningDate = joiningDate;
+    }
 }
