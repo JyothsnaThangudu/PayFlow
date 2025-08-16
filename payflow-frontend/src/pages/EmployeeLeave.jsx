@@ -150,8 +150,26 @@ const EmployeeLeave = () => {
         }
 
         // Determine if this will be paid or unpaid leave
-        const willBePaid = leaveStats.remainingPaidLeaves >= daysRequested;
-        const leaveType = willBePaid ? "Paid Leave" : "Unpaid Leave";
+        // const willBePaid = leaveStats.remainingPaidLeaves >= daysRequested;
+        // const leaveType = willBePaid ? "Paid Leave" : "Unpaid Leave";
+        // Calculate paid/unpaid days
+const paidDays = Math.min(leaveStats.remainingPaidLeaves, daysRequested);
+const unpaidDays = Math.max(0, daysRequested - leaveStats.remainingPaidLeaves);
+
+// Optimistically update stats
+setLeaveStats(prev => ({
+    ...prev,
+    usedPaidLeaves: prev.usedPaidLeaves + paidDays,
+    remainingPaidLeaves: prev.remainingPaidLeaves - paidDays,
+    usedUnpaidLeaves: prev.usedUnpaidLeaves + unpaidDays,
+    unpaidLeavesThisMonth: prev.unpaidLeavesThisMonth + unpaidDays
+}));
+
+
+// setLeaveStats(updatedLeaveStats);
+
+const leaveType = `${paidDays} Paid Leave(s) + ${unpaidDays} Unpaid Leave(s)`;
+
 
         setLeaveLoading(true);
         
