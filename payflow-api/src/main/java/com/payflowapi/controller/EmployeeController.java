@@ -26,6 +26,8 @@ import com.payflowapi.service.PayslipService;
 import java.time.LocalDate;
 import java.time.format.TextStyle;
 import java.util.Locale;
+import java.util.ArrayList;
+import java.util.HashMap;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
@@ -288,76 +290,227 @@ public ResponseEntity<Resource> downloadEmployeePayslip(@PathVariable Long emplo
         return ResponseEntity.ok(stats);
     }
 
-    // Endpoint to apply for leave
-    @PostMapping("/leave/apply")
-    public ResponseEntity<?> applyForLeave(@RequestBody LeaveRequestDto dto) {
-        // Find employee by email
-        Employee employee = employeeRepository.findByEmail(dto.getEmail()).orElse(null);
-        if (employee == null) {
-            return ResponseEntity.badRequest().body("Employee not found");
-        }
-
-        // Parse dates
-        java.time.LocalDate fromDate = java.time.LocalDate.parse(dto.getStartDate());
-        java.time.LocalDate toDate = java.time.LocalDate.parse(dto.getEndDate());
-
-        // Validate date range
-        if (fromDate.isAfter(toDate)) {
-            return ResponseEntity.badRequest().body("Start date cannot be after end date");
-        }
-
-        // Calculate days requested
-        int daysRequested = leaveService.calculateLeaveDays(fromDate, toDate);
-
-        // Check for overlapping leave requests
-        List<EmployeeLeave> overlappingLeaves = employeeLeaveRepository.findOverlappingLeaves(
-                employee.getId(), fromDate, toDate);
-
-        if (!overlappingLeaves.isEmpty()) {
-            StringBuilder conflictMessage = new StringBuilder("Leave request conflicts with existing leave(s): ");
-            for (EmployeeLeave existing : overlappingLeaves) {
-                conflictMessage.append(existing.getFromDate().toString())
-                        .append(" to ")
-                        .append(existing.getToDate().toString())
-                        .append(" (")
-                        .append(existing.getStatus())
-                        .append("), ");
-            }
-            // Remove trailing comma and space
-            String message = conflictMessage.toString();
-            if (message.endsWith(", ")) {
-                message = message.substring(0, message.length() - 2);
-            }
-            return ResponseEntity.badRequest().body(message);
-        }
-
-        // Determine if this should be paid or unpaid leave
-        boolean isPaidLeave = leaveService.shouldBePaidLeave(employee.getId(), daysRequested);
-        
-        // Create new leave request
-        EmployeeLeave leave = new EmployeeLeave();
-        leave.setEmployeeId(employee.getId());
-        leave.setManagerId(employee.getManagerId());
-        leave.setEmployeeName(employee.getFullName());
-        leave.setType(dto.getType());
-        leave.setFromDate(fromDate);
-        leave.setToDate(toDate);
-        leave.setReason(dto.getReason());
-        leave.setStatus("PENDING");
-        leave.setIsPaid(isPaidLeave);
-        leave.setLeaveDays(daysRequested);
-
-        EmployeeLeave savedLeave = employeeLeaveRepository.save(leave);
-        
-        // Return response with leave type information
-        java.util.Map<String, Object> response = new java.util.HashMap<>();
-        response.put("leave", savedLeave);
-        response.put("leaveType", isPaidLeave ? "Paid Leave" : "Unpaid Leave");
-        response.put("message", String.format("Leave request submitted successfully as %s (%d days)", 
-                isPaidLeave ? "Paid Leave" : "Unpaid Leave", daysRequested));
-        
-        return ResponseEntity.ok(response);
+@PostMapping("/leave/apply")
+public ResponseEntity<?> applyForLeave(@RequestBody LeaveRequestDto dto) {
+    // Find employee by email
+    Employee employee = employeeRepository.findByEmail(dto.getEmail()).orElse(null);
+    if (employee == null) {
+        return ResponseEntity.badRequest().body("Employee not found");
     }
+
+    // Parse dates
+    java.time.LocalDate fromDate = java.time.LocalDate.parse(dto.getStartDate());
+    java.time.LocalDate toDate = java.time.LocalDate.parse(dto.getEndDate());
+
+    // Validate date range
+    if (fromDate.isAfter(toDate)) {
+        return ResponseEntity.badRequest().body("Start date cannot be after end date");
+    }
+
+    // Paid leave tracking
+    int totalPaidLeaves = 12; // ideally fetch from employee record
+    int usedPaidLeaves = employeeLeaveRepository.sumUsedPaidLeaves(employee.getId());
+    int remainingPaidLeaves = Math.max(0, totalPaidLeaves - usedPaidLeaves);
+
+    // Calculate days requested
+    int daysRequested = leaveService.calculateLeaveDays(fromDate, toDate);
+
+    // Split into paid and unpaid
+    int paidDays = Math.min(remainingPaidLeaves, daysRequested);
+    int unpaidDays = Math.max(0, daysRequested - remainingPaidLeaves);
+
+    // Check for overlapping leave requests
+    List<EmployeeLeave> overlappingLeaves = employeeLeaveRepository.findOverlappingLeaves(
+            employee.getId(), fromDate, toDate);
+
+    if (!overlappingLeaves.isEmpty()) {
+        StringBuilder conflictMessage = new StringBuilder("Leave request conflicts with existing leave(s): ");
+        for (EmployeeLeave existing : overlappingLeaves) {
+            conflictMessage.append(existing.getFromDate().toString())
+                    .append(" to ")
+                    .append(existing.getToDate().toString())
+                    .append(" (")
+                    .append(existing.getStatus())
+                    .append("), ");
+        }
+        String message = conflictMessage.toString();
+        if (message.endsWith(", ")) {
+            message = message.substring(0, message.length() - 2);
+        }
+        return ResponseEntity.badRequest().body(message);
+    }
+
+    // --- SAVE PAID + UNPAID LEAVES SEPARATELY ---
+    List<EmployeeLeave> savedLeaves = new ArrayList<>();
+
+    if (paidDays > 0) {
+        EmployeeLeave paidLeave = new EmployeeLeave();
+        paidLeave.setEmployeeId(employee.getId());
+        paidLeave.setManagerId(employee.getManagerId());
+        paidLeave.setEmployeeName(employee.getFullName());
+        paidLeave.setType(dto.getType());
+        paidLeave.setFromDate(fromDate);
+        paidLeave.setToDate(fromDate.plusDays(paidDays - 1)); // split actual dates
+        paidLeave.setReason(dto.getReason());
+        paidLeave.setStatus("PENDING");
+        paidLeave.setLeaveDays(paidDays);
+        paidLeave.setPaidDays(paidDays);
+        paidLeave.setUnpaidDays(0);
+        paidLeave.setIsPaid(true);
+
+        savedLeaves.add(employeeLeaveRepository.save(paidLeave));
+    }
+
+    if (unpaidDays > 0) {
+        EmployeeLeave unpaidLeave = new EmployeeLeave();
+        unpaidLeave.setEmployeeId(employee.getId());
+        unpaidLeave.setManagerId(employee.getManagerId());
+        unpaidLeave.setEmployeeName(employee.getFullName());
+        unpaidLeave.setType(dto.getType());
+        unpaidLeave.setFromDate(fromDate.plusDays(paidDays)); // unpaid starts after paid ends
+        unpaidLeave.setToDate(toDate);
+        unpaidLeave.setReason(dto.getReason());
+        unpaidLeave.setStatus("PENDING");
+        unpaidLeave.setLeaveDays(unpaidDays);
+        unpaidLeave.setPaidDays(0);
+        unpaidLeave.setUnpaidDays(unpaidDays);
+        unpaidLeave.setIsPaid(false);
+
+        savedLeaves.add(employeeLeaveRepository.save(unpaidLeave));
+    }
+
+    // Calculate summary again
+    int totalUnpaidLeaves = employeeLeaveRepository.sumUsedUnpaidLeavesThisYear(employee.getId());
+    int unpaidLeavesThisMonth = employeeLeaveRepository.sumUsedUnpaidLeavesThisMonth(employee.getId());
+
+    Map<String, Object> response = new HashMap<>();
+    response.put("paidLeaves", Map.of(
+            "total", totalPaidLeaves,
+            "used", totalPaidLeaves - remainingPaidLeaves,
+            "remaining", remainingPaidLeaves
+    ));
+    response.put("unpaidLeaves", Map.of(
+            "yearTotal", totalUnpaidLeaves,
+            "thisMonth", unpaidLeavesThisMonth
+    ));
+    response.put("message", String.format("Leave submitted: %d paid, %d unpaid", paidDays, unpaidDays));
+    response.put("leaves", savedLeaves);
+
+    return ResponseEntity.ok(response);
+}
+
+
+    // Endpoint to apply for leave
+//     @PostMapping("/leave/apply")
+//     public ResponseEntity<?> applyForLeave(@RequestBody LeaveRequestDto dto) {
+//         // Find employee by email
+//         Employee employee = employeeRepository.findByEmail(dto.getEmail()).orElse(null);
+//         if (employee == null) {
+//             return ResponseEntity.badRequest().body("Employee not found");
+//         }
+
+//         // Parse dates
+//         java.time.LocalDate fromDate = java.time.LocalDate.parse(dto.getStartDate());
+//         java.time.LocalDate toDate = java.time.LocalDate.parse(dto.getEndDate());
+
+//         // Validate date range
+//         if (fromDate.isAfter(toDate)) {
+//             return ResponseEntity.badRequest().body("Start date cannot be after end date");
+//         }
+
+//         // Calculate days requested
+// //         int daysRequested = leaveService.calculateLeaveDays(fromDate, toDate);
+
+// //         // Get remaining paid leaves for this employee
+// // int remainingPaidLeaves = leaveService.getRemainingPaidLeaves(employee.getId());
+
+// // // Split requested days into paid and unpaid
+// // int paidDays = Math.min(remainingPaidLeaves, daysRequested);
+// // int unpaidDays = Math.max(0, daysRequested - remainingPaidLeaves);
+
+
+
+//         int totalPaidLeaves = 12; // or fetch from employee record
+// int usedPaidLeaves = employeeLeaveRepository.sumUsedPaidLeaves(employee.getId()); // only approved/accepted paid leaves
+
+// int remainingPaidLeaves = Math.max(0, totalPaidLeaves - usedPaidLeaves);
+// int daysRequested = leaveService.calculateLeaveDays(fromDate, toDate);
+
+// // Split into paid and unpaid
+// int paidDays = Math.min(remainingPaidLeaves, daysRequested);
+// int unpaidDays = Math.max(0, daysRequested - remainingPaidLeaves);
+//         // Check for overlapping leave requests
+//         List<EmployeeLeave> overlappingLeaves = employeeLeaveRepository.findOverlappingLeaves(
+//                 employee.getId(), fromDate, toDate);
+
+//         if (!overlappingLeaves.isEmpty()) {
+//             StringBuilder conflictMessage = new StringBuilder("Leave request conflicts with existing leave(s): ");
+//             for (EmployeeLeave existing : overlappingLeaves) {
+//                 conflictMessage.append(existing.getFromDate().toString())
+//                         .append(" to ")
+//                         .append(existing.getToDate().toString())
+//                         .append(" (")
+//                         .append(existing.getStatus())
+//                         .append("), ");
+//             }
+//             // Remove trailing comma and space
+//             String message = conflictMessage.toString();
+//             if (message.endsWith(", ")) {
+//                 message = message.substring(0, message.length() - 2);
+//             }
+//             return ResponseEntity.badRequest().body(message);
+//         }
+
+//         // Determine if this should be paid or unpaid leave
+//         // boolean isPaidLeave = leaveService.shouldBePaidLeave(employee.getId(), daysRequested);
+        
+//         // Create new leave request
+//         EmployeeLeave leave = new EmployeeLeave();
+//         leave.setEmployeeId(employee.getId());
+//         leave.setManagerId(employee.getManagerId());
+//         leave.setEmployeeName(employee.getFullName());
+//         leave.setType(dto.getType());
+//         leave.setFromDate(fromDate);
+//         leave.setToDate(toDate);
+//         leave.setReason(dto.getReason());
+//         leave.setStatus("PENDING");
+//         leave.setLeaveDays(daysRequested);
+// leave.setPaidDays(paidDays);      // <-- Add these new fields in your EmployeeLeave entity
+// leave.setUnpaidDays(unpaidDays);
+// leave.setIsPaid(paidDays > 0);    // optional, just for UI
+// leave.setPaidDays(paidDays);
+// leave.setUnpaidDays(unpaidDays);
+
+
+//         // leave.setIsPaid(isPaidLeave);
+//         // leave.setLeaveDays(daysRequested);
+
+//         EmployeeLeave savedLeave = employeeLeaveRepository.save(leave);
+        
+// int totalUnpaidLeaves = employeeLeaveRepository.sumUsedUnpaidLeavesThisYear(employee.getId());
+// int unpaidLeavesThisMonth = employeeLeaveRepository.sumUsedUnpaidLeavesThisMonth(employee.getId());
+
+//         java.util.Map<String, Object> response = new java.util.HashMap<>();
+// response.put("paidLeaves", Map.of(
+//     "total", totalPaidLeaves,
+//     "used", totalPaidLeaves - remainingPaidLeaves, // used = total - remaining
+//     "remaining", remainingPaidLeaves
+// ));
+// response.put("unpaidLeaves", Map.of(
+//     "yearTotal", totalUnpaidLeaves,
+//     "thisMonth", unpaidLeavesThisMonth
+// ));
+// response.put("message", String.format("Leave submitted: %d paid, %d unpaid", paidDays, unpaidDays));
+
+//         // Return response with leave type information
+//         // java.util.Map<String, Object> response = new java.util.HashMap<>();
+//         // response.put("leave", savedLeave);
+//         // response.put("leaveType", isPaidLeave ? "Paid Leave" : "Unpaid Leave");
+//         // response.put("message", String.format("Leave request submitted successfully as %s (%d days)", 
+//         //         isPaidLeave ? "Paid Leave" : "Unpaid Leave", daysRequested));
+        
+//         return ResponseEntity.ok(response);
+//     }
 
     @Autowired
     private EmployeeRepository employeeRepository;
