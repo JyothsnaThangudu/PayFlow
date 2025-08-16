@@ -27,10 +27,7 @@ export default function UpcomingHolidays() {
   // Pagination calculations
   const indexOfLastHoliday = currentPage * rowsPerPage;
   const indexOfFirstHoliday = indexOfLastHoliday - rowsPerPage;
-  const currentHolidays = holidays.slice(
-    indexOfFirstHoliday,
-    indexOfLastHoliday
-  );
+  const currentHolidays = holidays.slice(indexOfFirstHoliday, indexOfLastHoliday);
   const totalPages = Math.ceil(holidays.length / rowsPerPage);
 
   const handlePrev = () => {
@@ -45,53 +42,53 @@ export default function UpcomingHolidays() {
     <div style={{ display: "flex" }}>
       <EmployeeSidebar />
       <div className="content-area">
-        <h2>Upcoming Public Holidays in India</h2>
-
-        <label style={{ marginLeft: "1000px" }}>
-          Rows per page:{" "}
-          <select
-            value={rowsPerPage}
-            onChange={(e) => {
-              setRowsPerPage(parseInt(e.target.value, 10));
-              setCurrentPage(1); // Reset page to 1 when rows per page changes
-            }}
-            
-          >
-            {[5, 10, 20, 50].map((num) => (
-              <option key={num} value={num}>
-                {num}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        <table className="holidays-table">
-          <thead>
-            <tr>
-              <th>Holiday</th>
-              <th>Date</th>
-            </tr>
-          </thead>
-          <tbody>
-            {currentHolidays.map((holiday, index) => (
-              <tr key={index}>
-                <td>{holiday.summary}</td>
-                <td>{holiday.start.date}</td>
+        <div className="holidays-section">
+          <h2>Upcoming Public Holidays in India</h2>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', marginBottom: '18px' }}>
+            <label style={{ fontWeight: 500, color: '#6366f1', marginRight: '12px' }}>
+              Rows per page:
+            </label>
+            <select
+              value={rowsPerPage}
+              onChange={(e) => {
+                setRowsPerPage(parseInt(e.target.value, 10));
+                setCurrentPage(1);
+              }}
+            >
+              {[5, 10, 20, 50].map((num) => (
+                <option key={num} value={num}>
+                  {num}
+                </option>
+              ))}
+            </select>
+          </div>
+          <table className="holidays-table">
+            <thead>
+              <tr>
+                <th>Holiday</th>
+                <th>Date</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-
-        <div className="pagination-controls">
-          <button onClick={handlePrev} disabled={currentPage === 1}>
-            Prev
-          </button>
-          <span style={{ margin: "0 10px" }}>
-            Page {currentPage} of {totalPages}
-          </span>
-          <button onClick={handleNext} disabled={currentPage === totalPages}>
-            Next
-          </button>
+            </thead>
+            <tbody>
+              {currentHolidays.map((holiday, index) => (
+                <tr key={index}>
+                  <td style={{ fontWeight: 500, color: '#6366f1' }}>{holiday.summary}</td>
+                  <td style={{ color: '#334155' }}>{holiday.start.date}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <div className="pagination-controls">
+            <button onClick={handlePrev} disabled={currentPage === 1}>
+              Prev
+            </button>
+            <span>
+              Page {currentPage} of {totalPages}
+            </span>
+            <button onClick={handleNext} disabled={currentPage === totalPages}>
+              Next
+            </button>
+          </div>
         </div>
       </div>
     </div>

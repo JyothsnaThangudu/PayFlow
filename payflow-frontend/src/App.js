@@ -23,6 +23,7 @@ import ManagerDashboard from "./pages/ManagerDashboard";
 import NotificationsPage from "./pages/NotificationsPage";
 import EmployeeOverview from "./pages/EmployeeOverview";
 import EmployeeProfile from "./pages/EmployeeProfile";
+// ...existing code...
 import TeamMembers from "./pages/TeamMembers";
 import PayrollDashboard from "./pages/PayrollDashboard";
 import SchedulePayrollForm from "./pages/SchedulePayrollForm";
@@ -77,6 +78,7 @@ function App() {
                 <Route path="/employee-resignation" element={<EmployeeResignation />} />
                 <Route path="/employee-overview" element={<EmployeeOverview />} />
                 <Route path="/employee-profile" element={<EmployeeProfile />} />
+                <Route path="/profile" element={<EmployeeProfile />} />
                 <Route path="/employee-leave-history" element={<LeaveHistory />} />
                 <Route path="/upcoming-holidays" element={<UpcomingHolidays />} />
                 <Route path="/employee-ctc-dashboard" element={<EmployeeCTCDashboard />} />
@@ -93,6 +95,7 @@ function App() {
                 <Route path="/hr/payment-holds" element={<HRPaymentHolds />} />
                 <Route path="/employee-login" element={<EmployeeLogin />} />
 
+// ...existing code...
             </Routes>
         </BrowserRouter>
     );

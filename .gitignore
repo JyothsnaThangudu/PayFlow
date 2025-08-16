@@ -51,3 +51,4 @@ logs/
 
 # Package files
 package-lock.json
+payflow-frontend/build/
