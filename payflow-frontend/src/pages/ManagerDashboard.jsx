@@ -342,19 +342,17 @@ function ManagerDashboard() {
 
     const formatDate = (dateString) => {
         if (!dateString) return 'Date not available';
-
         const date = new Date(dateString);
         if (isNaN(date.getTime())) return 'Invalid date';
-
-        const now = new Date();
-        const diffTime = now - date;
-        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-
-        if (diffDays === 0) return 'Today';
-        if (diffDays === 1) return 'Yesterday';
-        if (diffDays < 7) return `${diffDays} days ago`;
-
-        return date.toLocaleDateString();
+        // Always show full date and time for reminders
+        return date.toLocaleString('en-US', {
+            year: 'numeric',
+            month: 'short',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: true
+        });
     };
 
 
@@ -805,18 +803,86 @@ function ManagerDashboard() {
                                 </div>
                                 
                                 <div className="reminder-form-card" style={{ marginTop: 16 }}>
-                                    <h4 style={{ marginBottom: 18 }}><FaPlus /> Add New Reminder</h4>
-                                    <form onSubmit={handleAddReminder}>
-                                        <div className="form-group" style={{ display: 'flex', gap: 16, alignItems: 'center', flexWrap: 'wrap', marginBottom: 12 }}>
-                                            <input type="text" value={reminder} onChange={e => setReminder(e.target.value)} placeholder="Enter your reminder..." className="reminder-input" required maxLength={200} style={{ minWidth: 220, padding: '10px 12px', borderRadius: 8, border: '1px solid #e5e7eb', fontSize: '1rem' }} />
-                                            <input type="date" value={reminderDate} onChange={e => setReminderDate(e.target.value)} className="reminder-date-input" style={{ padding: '10px 12px', borderRadius: 8, border: '1px solid #e5e7eb', fontSize: '1rem' }} />
-                                            <input type="time" value={reminderTime} onChange={e => setReminderTime(e.target.value)} className="reminder-time-input" style={{ padding: '10px 12px', borderRadius: 8, border: '1px solid #e5e7eb', fontSize: '1rem' }} />
-                                            <button type="submit" className="reminder-btn" style={{ background: '#6366f1', color: '#fff', border: 'none', borderRadius: 8, padding: '10px 24px', fontWeight: 600, fontSize: '1rem', display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
-                                                <FaPlus /> Add Reminder
-                                            </button>
+                                    <h4 style={{ marginBottom: 18, display: 'flex', alignItems: 'center', gap: 10, fontSize: '1.3rem', color: '#222' }}>
+                                        <FaPlus style={{ color: '#6366f1', fontSize: 22 }} /> Add New Reminder
+                                    </h4>
+                                    <form onSubmit={handleAddReminder} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 18 }}>
+                                        <input
+                                            type="text"
+                                            value={reminder}
+                                            onChange={e => setReminder(e.target.value)}
+                                            placeholder="Enter your reminder..."
+                                            className="reminder-input"
+                                            required
+                                            maxLength={200}
+                                            style={{
+                                                width: '100%',
+                                                maxWidth: 340,
+                                                padding: '14px 16px',
+                                                borderRadius: 10,
+                                                border: '1.5px solid #d1d5db',
+                                                fontSize: '1.08rem',
+                                                marginBottom: 10,
+                                                boxShadow: '0 2px 8px rgba(99,102,241,0.04)'
+                                            }}
+                                        />
+                                        <div style={{ display: 'flex', gap: 16, width: '100%', maxWidth: 340, justifyContent: 'center' }}>
+                                            <input
+                                                type="date"
+                                                value={reminderDate}
+                                                onChange={e => setReminderDate(e.target.value)}
+                                                className="reminder-date-input"
+                                                style={{
+                                                    flex: 1,
+                                                    padding: '12px 14px',
+                                                    borderRadius: 10,
+                                                    border: '1.5px solid #d1d5db',
+                                                    fontSize: '1.08rem',
+                                                    background: '#f8fafc',
+                                                    marginRight: 8
+                                                }}
+                                            />
+                                            <input
+                                                type="time"
+                                                value={reminderTime}
+                                                onChange={e => setReminderTime(e.target.value)}
+                                                className="reminder-time-input"
+                                                style={{
+                                                    flex: 1,
+                                                    padding: '12px 14px',
+                                                    borderRadius: 10,
+                                                    border: '1.5px solid #d1d5db',
+                                                    fontSize: '1.08rem',
+                                                    background: '#f8fafc'
+                                                }}
+                                            />
                                         </div>
-                                        <div className="form-hint" style={{ marginTop: 4 }}>
-                                            <small>Tip: Be specific and actionable with your reminders</small>
+                                        <button
+                                            type="submit"
+                                            className="reminder-btn"
+                                            style={{
+                                                background: 'linear-gradient(90deg, #6366f1 60%, #60a5fa 100%)',
+                                                color: '#fff',
+                                                border: 'none',
+                                                borderRadius: 10,
+                                                padding: '14px 32px',
+                                                fontWeight: 700,
+                                                fontSize: '1.08rem',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: 10,
+                                                boxShadow: '0 2px 8px rgba(99,102,241,0.08)',
+                                                cursor: 'pointer',
+                                                marginTop: 8,
+                                                transition: 'background 0.2s'
+                                            }}
+                                        >
+                                            <FaPlus style={{ fontSize: 18 }} /> Add Reminder
+                                        </button>
+                                        <div className="form-hint" style={{ marginTop: 6, textAlign: 'center' }}>
+                                            <small style={{ color: '#6366f1', fontStyle: 'italic', fontSize: '0.98rem' }}>
+                                                Tip: Be specific and actionable with your reminders
+                                            </small>
                                         </div>
                                     </form>
                                 </div>
@@ -833,11 +899,11 @@ function ManagerDashboard() {
                                                         <p className="reminder-text">{r.text}</p>
                                                         <div className="reminder-meta">
                                                             <span className="reminder-date">
-                                                                <FaClock /> Created {formatDate(r.createdAt)}
+                                                                <FaClock /> Created {r.createdAt ? formatDate(r.createdAt) : 'Date not available'}
                                                             </span>
-                                                            {r.date && (
+                                                            {(r.date || r.time) && (
                                                                 <span className="reminder-date">
-                                                                    <FaCalendarAlt /> Scheduled: {r.date}
+                                                                    <FaCalendarAlt /> Scheduled: {r.date ? r.date : ''}{r.time ? `, ${r.time}` : ''}
                                                                 </span>
                                                             )}
                                                         </div>

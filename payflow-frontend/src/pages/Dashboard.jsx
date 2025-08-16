@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { FaBullhorn, FaListAlt, FaCalendarAlt, FaClock, FaTimes } from 'react-icons/fa';
 import './Dashboard.css';
 import Sidebar from "../components/Sidebar";
 import Header from "./Header";
@@ -9,6 +10,7 @@ export default function Dashboard() {
     const [employeeCount, setEmployeeCount] = useState(0);
     const [genderStats, setGenderStats] = useState({ male: 0, female: 0 });
     const [announcements, setAnnouncements] = useState([]);
+    const [showAllAnnouncements, setShowAllAnnouncements] = useState(false);
     const [onLeave, setOnLeave] = useState([]);
     const [calendarEvents, setCalendarEvents] = useState([]);
     const [onboardings, setOnboardings] = useState([]);
@@ -310,15 +312,78 @@ export default function Dashboard() {
 
                         {/* Column containing Announcements and Employees on Leave */}
                         <div className="card-column" style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-                            {/* Announcements Card */}
-                            <div className="card" style={{ background: '#fff', borderRadius: 14, boxShadow: '0 4px 24px rgba(30,64,175,0.07), 0 1.5px 6px rgba(0,0,0,0.04)', padding: '28px 24px 22px 24px', transition: 'box-shadow 0.2s, transform 0.18s' }}>
-                                <h2 className="section-title">ANNOUNCEMENTS</h2>
-                                <ul className="announcement-list">
-                                    {announcements.length === 0 ? <li>No announcements</li> : announcements.map((a, i) => (
-                                        <li key={i}>{a.message}</li>
-                                    ))}
+                            {/* Announcements Card - Enhanced */}
+                            <div className="card" style={{ background: '#fff', borderRadius: 14, boxShadow: '0 4px 24px rgba(30,64,175,0.07), 0 1.5px 6px rgba(0,0,0,0.04)', padding: '28px 24px 22px 24px', transition: 'box-shadow 0.2s, transform 0.18s', position: 'relative' }}>
+                                <h2 className="section-title" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                                    <FaBullhorn style={{ color: '#6c63ff', fontSize: '1.3em' }} /> ANNOUNCEMENTS
+                                </h2>
+                                <ul className="announcement-list" style={{ marginBottom: 10 }}>
+                                    {announcements.length === 0 ? (
+                                        <li style={{ color: '#888', fontWeight: 500, padding: '8px 0' }}>No announcements</li>
+                                    ) : (
+                                        announcements.slice(0,2).map((a, i) => (
+                                            <li key={i} style={{ marginBottom: '10px', background: '#f3f4f6', borderRadius: '8px', padding: '10px 14px', boxShadow: '0 1px 4px rgba(44,62,80,0.06)' }}>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontWeight: 600, color: '#4f46e5', fontSize: '1.05em' }}>
+                                                    <FaBullhorn /> {a.message}
+                                                </div>
+                                                <div style={{ display: 'flex', gap: 16, fontSize: '0.95em', color: '#555', marginTop: 4 }}>
+                                                    <span><FaCalendarAlt /> {a.date || '-'}</span>
+                                                    <span><FaClock /> {a.time || '-'}</span>
+                                                    <span style={{ color: '#888', fontSize: '0.9em' }}>{a.createdAt ? new Date(a.createdAt).toLocaleString() : '-'}</span>
+                                                </div>
+                                            </li>
+                                        ))
+                                    )}
                                 </ul>
+                                <button
+                                    style={{ position: 'absolute', top: 18, right: 18, background: '#e0e7ff', color: '#6366f1', border: 'none', borderRadius: 6, padding: '6px 14px', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}
+                                    onClick={() => setShowAllAnnouncements(true)}
+                                    title="View All Announcements"
+                                >
+                                    <FaListAlt /> View All
+                                </button>
                             </div>
+
+                            {/* Modal for All Announcements */}
+                            {showAllAnnouncements && (
+                                <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(44,62,80,0.25)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                    <div style={{ background: '#fff', borderRadius: 18, boxShadow: '0 8px 32px rgba(44,62,80,0.18)', minWidth: 400, maxWidth: 480, width: '100%', padding: '2.5rem 2.2rem 2rem 2.2rem', position: 'relative' }}>
+                                        <button
+                                            onClick={() => setShowAllAnnouncements(false)}
+                                            style={{ position: 'absolute', top: 18, right: 18, background: 'none', border: 'none', color: '#6366f1', fontSize: '1.5rem', cursor: 'pointer', zIndex: 10 }}
+                                            title="Close"
+                                        >
+                                            <FaTimes />
+                                        </button>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: '1.2rem' }}>
+                                            <FaBullhorn style={{ fontSize: '2.2rem', color: '#6c63ff' }} />
+                                            <h2 style={{ margin: 0, fontWeight: 700, color: '#222' }}>All Announcements</h2>
+                                        </div>
+                                        <div style={{ maxHeight: 260, overflowY: 'auto', marginTop: 10 }}>
+                                            {announcements.length === 0 ? (
+                                                <div style={{ textAlign: 'center', color: '#888', padding: '2rem 0' }}>No announcements found.</div>
+                                            ) : (
+                                                <ul style={{ padding: 0, margin: 0 }}>
+                                                    {announcements.map((a, idx) => (
+                                                        <li key={idx} style={{ background: '#f8fafc', borderRadius: 8, padding: '1rem', marginBottom: '1rem', boxShadow: '0 1px 4px rgba(44,62,80,0.06)', listStyle: 'none' }}>
+                                                            <div style={{ fontSize: '1.08rem', fontWeight: 500, color: '#4f46e5', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: 8 }}>
+                                                                <FaBullhorn /> {a.message}
+                                                            </div>
+                                                            <div style={{ display: 'flex', gap: 16, fontSize: '0.95rem', color: '#555', alignItems: 'center', justifyContent: 'space-between' }}>
+                                                                <div style={{ display: 'flex', gap: 16 }}>
+                                                                    <span><FaCalendarAlt /> {a.date || '-'}</span>
+                                                                    <span><FaClock /> {a.time || '-'}</span>
+                                                                </div>
+                                                                <span style={{ fontSize: '0.88em', color: '#888', marginLeft: 'auto' }}>Sent: {a.createdAt ? new Date(a.createdAt).toLocaleString() : '-'}</span>
+                                                            </div>
+                                                        </li>
+                                                    ))}
+                                                </ul>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
 
                             {/* Employees on Leave Card */}
                             <div className="card" style={{ background: '#fff', borderRadius: 14, boxShadow: '0 4px 24px rgba(30,64,175,0.07), 0 1.5px 6px rgba(0,0,0,0.04)', padding: '28px 24px 22px 24px', transition: 'box-shadow 0.2s, transform 0.18s' }}>

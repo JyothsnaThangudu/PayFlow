@@ -7,8 +7,9 @@ import axios from 'axios';
 import { FaUserCircle, FaBuilding, FaBriefcase, FaCalendarAlt, FaEnvelope, FaPhone, FaMoneyBill, FaClipboardList, FaBell } from 'react-icons/fa';
 
 const EmployeeDashboard = () => {
-    const [employee, setEmployee] = useState(null);
-    const email = localStorage.getItem('userEmail');
+  const [employee, setEmployee] = useState(null);
+  const email = localStorage.getItem('userEmail');
+  const employeeId = localStorage.getItem("employeeId");
 
     const [reminders, setReminders] = useState([]);
     // Leave state
@@ -46,7 +47,7 @@ const EmployeeDashboard = () => {
 // Fetch latest payslip ID for the logged-in employee
 useEffect(() => {
   const fetchPayslipId = async () => {
-    // const employeeId = localStorage.getItem("employeeId");
+  const employeeId = localStorage.getItem("employeeId");
     try {
       const res = await fetch(
         `http://localhost:8080/api/ctc-management/payslip/employee/${employeeId}`

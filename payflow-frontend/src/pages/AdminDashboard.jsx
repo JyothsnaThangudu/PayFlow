@@ -1,15 +1,42 @@
 import React, { useEffect, useState } from 'react';
+import AnnouncementModal from '../components/AnnouncementModal';
 import PopupMessage from '../components/PopupMessage';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import Sidebar from '../components/SidebarAdmin';
 import './AdminDashboard.css';
-import { FaEdit, FaBell, FaUserPlus, FaFileExport, FaBullhorn, FaSync } from 'react-icons/fa';
+import { FaEdit, FaBell, FaUserPlus, FaFileExport, FaBullhorn, FaSync, FaTimes } from 'react-icons/fa';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 
 const AdminDashboard = () => {
     const navigate = useNavigate();
     const [users, setUsers] = useState([]);
+    const [announcementModalOpen, setAnnouncementModalOpen] = useState(false);
+    const [announcements, setAnnouncements] = useState([]);
+    const [viewAllAnnouncements, setViewAllAnnouncements] = useState(false);
+    // Fetch announcements from backend
+    useEffect(() => {
+        const fetchAnnouncements = async () => {
+            try {
+                const res = await axios.get('http://localhost:8080/api/announcements');
+                setAnnouncements(res.data);
+            } catch (err) {
+                console.error('Failed to fetch announcements', err);
+            }
+        };
+        fetchAnnouncements();
+    }, []);
+    // Handle announcement submit
+    const handleAnnouncementSubmit = async (announcement) => {
+        try {
+            const res = await axios.post('http://localhost:8080/api/announcements', announcement);
+            setAnnouncements(prev => [res.data, ...prev]);
+            setAnnouncementModalOpen(false);
+            setPopup({ show: true, title: 'Announcement Sent', message: 'Announcement sent successfully!', type: 'success' });
+        } catch (err) {
+            setPopup({ show: true, title: 'Failed', message: 'Failed to send announcement', type: 'error' });
+        }
+    };
     const [employees, setEmployees] = useState([]);
     const [leaves, setLeaves] = useState([]);
     const [employeeCount, setEmployeeCount] = useState(0);
@@ -462,9 +489,47 @@ const AdminDashboard = () => {
                                     <button className="quick-action-btn export-btn" title="Export Data" onClick={() => alert('Exporting data...')}>
                                         <FaFileExport style={{ marginRight: 6 }} /> Export
                                     </button>
-                                    <button className="quick-action-btn announce-btn" title="Send Announcement" onClick={() => alert('Announcement sent!')}>
+                                    <button className="quick-action-btn announce-btn" title="Send Announcement" onClick={() => setAnnouncementModalOpen(true)}>
                                         <FaBullhorn style={{ marginRight: 6 }} /> Announce
                                     </button>
+            {/* Announcement Modal */}
+            <AnnouncementModal
+                isOpen={announcementModalOpen}
+                onClose={() => setAnnouncementModalOpen(false)}
+                onSubmit={handleAnnouncementSubmit}
+                announcements={announcements}
+            />
+
+            {/* View All Announcements Modal */}
+            {viewAllAnnouncements && (
+                <div className="announcement-modal-overlay">
+                    <div className="announcement-modal" style={{ position: 'relative' }}>
+                        <button
+                            onClick={() => setViewAllAnnouncements(false)}
+                            style={{ position: 'absolute', top: 18, right: 18, background: 'none', border: 'none', color: '#6366f1', fontSize: '1.5rem', cursor: 'pointer', zIndex: 10 }}
+                            title="Close"
+                        >
+                            <FaTimes />
+                        </button>
+                        <h2>All Announcements</h2>
+                        <ul style={{ maxHeight: '300px', overflowY: 'auto', padding: 0 }}>
+                            {announcements.length === 0 ? (
+                                <li>No announcements found.</li>
+                            ) : (
+                                announcements.map((a, idx) => (
+                                    <li key={idx} style={{ marginBottom: '1rem', listStyle: 'none', borderBottom: '1px solid #eee', paddingBottom: '0.5rem' }}>
+                                        <strong>{a.message}</strong>
+                                        <br />
+                                        <span style={{ fontSize: '0.9em', color: '#666' }}>Date: {a.date || '-'} Time: {a.time || '-'}</span>
+                                        <br />
+                                        <span style={{ fontSize: '0.8em', color: '#aaa' }}>Sent: {a.createdAt ? new Date(a.createdAt).toLocaleString() : '-'}</span>
+                                    </li>
+                                ))
+                            )}
+                        </ul>
+                    </div>
+                </div>
+            )}
                                     <button 
                                         className="quick-action-btn refresh-btn" 
                                         title="Refresh Data" 

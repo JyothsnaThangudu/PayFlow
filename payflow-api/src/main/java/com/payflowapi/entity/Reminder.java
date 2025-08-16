@@ -3,6 +3,7 @@ package com.payflowapi.entity;
 import jakarta.persistence.*;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.time.LocalDateTime;
 
 @Entity
 public class Reminder {
@@ -17,8 +18,17 @@ public class Reminder {
     private LocalDate date;
     private LocalTime time;
     private boolean notified;
+    private LocalDateTime createdAt;
+    @PrePersist
+    protected void onCreate() {
+        if (this.createdAt == null) {
+            this.createdAt = LocalDateTime.now();
+        }
+    }
 
     // Getters and setters
+    public LocalDateTime getCreatedAt() { return createdAt; }
+    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 

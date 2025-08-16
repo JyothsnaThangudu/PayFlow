@@ -3,7 +3,6 @@ package com.payflowapi.controller;
 import com.payflowapi.dto.OnboardedEmployeeSummaryDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import com.payflowapi.repository.EmployeeRepository;
-import com.payflowapi.repository.AnnouncementRepository;
 import com.payflowapi.repository.CalendarEventRepository;
 import com.payflowapi.repository.EmployeeLeaveRepository;
 import com.payflowapi.repository.OnboardingRepository;
@@ -12,7 +11,6 @@ import com.payflowapi.repository.ProjectRepository;
 import com.payflowapi.repository.ProjectTeamMemberRepository;
 import com.payflowapi.repository.PayrollRepository;
 import com.payflowapi.entity.Employee;
-import com.payflowapi.entity.Announcement;
 import com.payflowapi.entity.CalendarEvent;
 import com.payflowapi.entity.EmployeeLeave;
 import com.payflowapi.entity.Onboarding;
@@ -34,8 +32,6 @@ public class HrDashboardController {
         @Autowired
         private EmployeeRepository employeeRepository;
         @Autowired
-        private AnnouncementRepository announcementRepository;
-        @Autowired
         private CalendarEventRepository calendarEventRepository;
         @Autowired
         private EmployeeLeaveRepository employeeLeaveRepository;
@@ -50,16 +46,6 @@ public class HrDashboardController {
         @Autowired
         private PayrollRepository payrollRepository;
 
-        // --- Announcements ---
-        @GetMapping("/announcements")
-        public List<Map<String, String>> getAnnouncements() {
-                List<Map<String, String>> list = new ArrayList<>();
-                List<Announcement> announcements = announcementRepository.findAll();
-                for (Announcement a : announcements) {
-                        list.add(Map.of("message", a.getMessage()));
-                }
-                return list;
-        }
 
         // --- Employees on Leave ---
         @GetMapping("/leave/today")
