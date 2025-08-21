@@ -6,6 +6,12 @@ import java.time.LocalDate;
 
 @Entity
 public class Employee {
+    // Bank and statutory details
+    private String uan;
+    private String pfNo;
+    private String esiNo;
+    private String bank;
+    private String accountNo;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -65,6 +71,16 @@ public class Employee {
     private String languages;
 
     // Getters and Setters
+    public String getUan() { return uan; }
+    public void setUan(String uan) { this.uan = uan; }
+    public String getPfNo() { return pfNo; }
+    public void setPfNo(String pfNo) { this.pfNo = pfNo; }
+    public String getEsiNo() { return esiNo; }
+    public void setEsiNo(String esiNo) { this.esiNo = esiNo; }
+    public String getBank() { return bank; }
+    public void setBank(String bank) { this.bank = bank; }
+    public String getAccountNo() { return accountNo; }
+    public void setAccountNo(String accountNo) { this.accountNo = accountNo; }
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
     

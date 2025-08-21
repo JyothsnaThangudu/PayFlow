@@ -21,15 +21,10 @@ public class EmployeeLeave {
     private String denialReason; // Reason provided by manager when denying leave
     private Boolean isPaid = true; // Indicates if this leave is paid or unpaid
     private Integer leaveDays; // Number of actual leave days taken
-    private int paidDays;
-    private int unpaidDays;
 
-    // getters and setters
-   public int getPaidDays() { return paidDays; }
-public void setPaidDays(int paidDays) { this.paidDays = paidDays; }
+    private Integer paidDays; // Number of paid leave days in this request
+    private Integer unpaidDays; // Number of unpaid leave days in this request
 
-public int getUnpaidDays() { return unpaidDays; }
-public void setUnpaidDays(int unpaidDays) { this.unpaidDays = unpaidDays; }
 
     // Getters and Setters
     public Long getId() { return id; }
@@ -73,4 +68,10 @@ public void setUnpaidDays(int unpaidDays) { this.unpaidDays = unpaidDays; }
 
     public Integer getLeaveDays() { return leaveDays; }
     public void setLeaveDays(Integer leaveDays) { this.leaveDays = leaveDays; }
+
+    public Integer getPaidDays() { return paidDays; }
+    public void setPaidDays(Integer paidDays) { this.paidDays = paidDays; }
+
+    public Integer getUnpaidDays() { return unpaidDays; }
+    public void setUnpaidDays(Integer unpaidDays) { this.unpaidDays = unpaidDays; }
 }

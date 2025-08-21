@@ -58,9 +58,12 @@ function LeaveHistory() {
                         </select>
                     </label>
                 </div>
+                {/* Add gap below pagination controls to prevent overlap */}
+                <div style={{ marginBottom: '32px' }}></div>
+                
 
-                {/* Table */}
-                <table className="leave-history-table">
+                {/* Table with increased gap above */}
+                <table className="leave-history-table" style={{ marginTop: '30px' }}>
                     <thead>
                         <tr>
                             <th>Leave Type</th>

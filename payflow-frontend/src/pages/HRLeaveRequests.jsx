@@ -370,15 +370,15 @@ function HRLeaveRequests() {
                                             }}>
                                                 <table className="leave-history-table">
                                                     <thead>
-                                                        <tr style={{ background: '#f8fafc' }}>
-                                                            <th style={{ color: '#8b5cf6', padding: '16px 12px', fontWeight: 700, fontSize: 14, borderBottom: '2px solid #e5e7eb' }}>Employee</th>
-                                                            <th style={{ color: '#8b5cf6', padding: '16px 12px', fontWeight: 700, fontSize: 14, borderBottom: '2px solid #e5e7eb' }}>Leave Type</th>
-                                                            <th style={{ color: '#8b5cf6', padding: '16px 12px', fontWeight: 700, fontSize: 14, borderBottom: '2px solid #e5e7eb' }}>From Date</th>
-                                                            <th style={{ color: '#8b5cf6', padding: '16px 12px', fontWeight: 700, fontSize: 14, borderBottom: '2px solid #e5e7eb' }}>To Date</th>
-                                                            <th style={{ color: '#8b5cf6', padding: '16px 12px', fontWeight: 700, fontSize: 14, borderBottom: '2px solid #e5e7eb' }}>Days</th>
-                                                            <th style={{ color: '#8b5cf6', padding: '16px 12px', fontWeight: 700, fontSize: 14, borderBottom: '2px solid #e5e7eb' }}>Reason</th>
-                                                            <th style={{ color: '#8b5cf6', padding: '16px 12px', fontWeight: 700, fontSize: 14, borderBottom: '2px solid #e5e7eb' }}>Status</th>
-                                                            <th style={{ color: '#8b5cf6', padding: '16px 12px', fontWeight: 700, fontSize: 14, borderBottom: '2px solid #e5e7eb' }}>Actions</th>
+                                                        <tr style={{ background: 'linear-gradient(90deg, #6366f1 0%, #8b5cf6 100%)' }}>
+                                                            <th style={{ color: '#fff', padding: '16px 12px', fontWeight: 700, fontSize: 15, borderBottom: '2px solid #e5e7eb', letterSpacing: '1px', textShadow: '0 2px 8px rgba(60,60,120,0.10)' }}>Employee</th>
+                                                            <th style={{ color: '#fff', padding: '16px 12px', fontWeight: 700, fontSize: 15, borderBottom: '2px solid #e5e7eb', letterSpacing: '1px', textShadow: '0 2px 8px rgba(60,60,120,0.10)' }}>Leave Type</th>
+                                                            <th style={{ color: '#fff', padding: '16px 12px', fontWeight: 700, fontSize: 15, borderBottom: '2px solid #e5e7eb', letterSpacing: '1px', textShadow: '0 2px 8px rgba(60,60,120,0.10)' }}>From Date</th>
+                                                            <th style={{ color: '#fff', padding: '16px 12px', fontWeight: 700, fontSize: 15, borderBottom: '2px solid #e5e7eb', letterSpacing: '1px', textShadow: '0 2px 8px rgba(60,60,120,0.10)' }}>To Date</th>
+                                                            <th style={{ color: '#fff', padding: '16px 12px', fontWeight: 700, fontSize: 15, borderBottom: '2px solid #e5e7eb', letterSpacing: '1px', textShadow: '0 2px 8px rgba(60,60,120,0.10)' }}>Days</th>
+                                                            <th style={{ color: '#fff', padding: '16px 12px', fontWeight: 700, fontSize: 15, borderBottom: '2px solid #e5e7eb', letterSpacing: '1px', textShadow: '0 2px 8px rgba(60,60,120,0.10)' }}>Reason</th>
+                                                            <th style={{ color: '#fff', padding: '16px 12px', fontWeight: 700, fontSize: 15, borderBottom: '2px solid #e5e7eb', letterSpacing: '1px', textShadow: '0 2px 8px rgba(60,60,120,0.10)' }}>Status</th>
+                                                            <th style={{ color: '#fff', padding: '16px 12px', fontWeight: 700, fontSize: 15, borderBottom: '2px solid #e5e7eb', letterSpacing: '1px', textShadow: '0 2px 8px rgba(60,60,120,0.10)' }}>Actions</th>
                                                         </tr>
                                                     </thead>
                                                     <tbody>

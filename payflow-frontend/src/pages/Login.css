@@ -1,3 +1,176 @@
+        body, html, #root, .App {
+            min-height: 100vh;
+            background: linear-gradient(120deg, #7c6cf7 0%, #a18fff 60%, #e3eafc 100%) !important;
+        }
+
+.login-container {
+    max-width: 400px;
+    margin: 80px auto;
+    padding: 40px 30px;
+    background-color: #ffffff;
+    box-shadow: 0 10px 30px rgba(60, 80, 120, 0.13);
+    border-radius: 18px;
+    text-align: center;
+    font-family: 'Segoe UI', 'Roboto', Arial, sans-serif;
+    position: relative;
+    transition: box-shadow 0.2s;
+}
+
+.login-container h2 {
+    margin-bottom: 24px;
+    color: #4f46e5;
+    font-size: 28px;
+    font-weight: bold;
+    letter-spacing: 0.03em;
+}
+
+.login-container form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.login-input {
+    padding: 13px 16px;
+    margin-bottom: 16px;
+    border: 1.5px solid #cfd8dc;
+    border-radius: 9px;
+    font-size: 16px;
+    background: #f5f6fa;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    box-shadow: 0 1px 4px rgba(60,80,120,0.04);
+}
+.login-input:focus {
+    border-color: #4f46e5;
+    box-shadow: 0 2px 8px #4f46e522;
+    outline: none;
+    background: #e3eafc;
+}
+
+.login-password-wrapper {
+    position: relative;
+    width: 100%;
+    margin-bottom: 16px;
+}
+
+.login-password-eye {
+    position: absolute;
+    right: 0.75em;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none !important;
+    border: none;
+    padding: 0;
+    margin: 0;
+    cursor: pointer;
+    color: #4f46e5;
+    font-size: 1.3em;
+    outline: none;
+    height: 1.5em;
+    display: flex;
+    align-items: center;
+}
+
+.login-container button[type="submit"] {
+    padding: 13px;
+    background-color: #2979ff;
+    color: white;
+    font-weight: 600;
+    font-size: 16px;
+    border: none;
+    border-radius: 9px;
+    cursor: pointer;
+    transition: background-color 0.2s, box-shadow 0.2s;
+    box-shadow: 0 2px 8px #2979ff22;
+    margin-top: 8px;
+}
+.login-container button[type="submit"]:hover {
+    background-color: #1565c0;
+    box-shadow: 0 4px 16px #2979ff44;
+}
+
+.error {
+    color: #c62828;
+    font-size: 1rem;
+    margin-bottom: 8px;
+}
+
+@media (max-width: 480px) {
+    .login-container {
+        margin: 40px 8px;
+        padding: 24px 8px;
+    }
+    .login-input {
+        font-size: 15px;
+        padding: 11px 10px;
+    }
+}
+.login-input {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 12px 14px;
+    margin-bottom: 16px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    font-size: 15px;
+    transition: border-color 0.2s ease;
+}
+
+.login-password-wrapper {
+    position: relative;
+    width: 100%;
+    margin-bottom: 16px;
+}
+
+.login-password-eye {
+    position: absolute;
+    right: 0.75em;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none !important;
+    background-color: transparent !important;
+    border: none;
+    padding: 0;
+    margin: 0;
+    cursor: pointer;
+    color: #6366f1;
+    font-size: 1.2em;
+    outline: none;
+    height: 1.5em;
+    display: flex;
+    align-items: center;
+}
+/* Password field with eye icon container */
+.login-password-wrapper {
+    position: relative;
+    width: 100%;
+    margin-bottom: 16px;
+}
+
+.login-password-wrapper input[type="password"],
+.login-password-wrapper input[type="text"] {
+    width: 100%;
+    box-sizing: border-box;
+    padding-right: 2.5em;
+}
+
+.login-password-wrapper button {
+    position: absolute;
+    right: 0.75em;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    padding: 0;
+    margin: 0;
+    cursor: pointer;
+    color: #6366f1;
+    font-size: 1.2em;
+    outline: none;
+    height: 1.5em;
+    display: flex;
+    align-items: center;
+}
 .login-container {
     max-width: 400px;
     margin: 80px auto;

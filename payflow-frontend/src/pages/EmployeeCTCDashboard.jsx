@@ -15,6 +15,35 @@ const EmployeeCTCDashboard = () => {
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState('ctc');
     const [message, setMessage] = useState({ type: '', text: '' });
+    // Bank details state
+    const [bankDetails, setBankDetails] = useState({
+        uan: '',
+        pfNo: '',
+        esiNo: '',
+        bank: '',
+        accountNo: ''
+    });
+    const [showBankModal, setShowBankModal] = useState(false);
+    // Fetch bank details from backend on mount
+    useEffect(() => {
+        if (!employeeId) return;
+        axios.get(`/api/employee/${employeeId}/bank-details`)
+            .then(res => {
+                if (res.data) setBankDetails(res.data);
+            })
+            .catch(() => setBankDetails({ uan: '', pfNo: '', esiNo: '', bank: '', accountNo: '' }));
+    }, [employeeId]);
+    // Save bank details to backend
+    const handleBankDetailsSave = async () => {
+        if (!employeeId) return;
+        try {
+            await axios.put(`/api/employee/${employeeId}/bank-details`, bankDetails);
+            setShowBankModal(false);
+            showMessage('success', 'Bank details saved!');
+        } catch (err) {
+            showMessage('error', 'Failed to save bank details');
+        }
+    };
 
     console.log('Employee CTC Dashboard - Employee ID:', employeeId); // Debug log
 
@@ -119,227 +148,222 @@ const EmployeeCTCDashboard = () => {
             // Generate PDF using jsPDF
             const doc = new jsPDF();
             const pageWidth = doc.internal.pageSize.width;
-            
+            const payslipMonth = fullPayslip.month || fullPayslip.payrollMonth || '-';
+            const payslipYear = fullPayslip.year || fullPayslip.payrollYear || '-';
+            const tableMargin = 15;
+            const tableWidth = pageWidth - 2 * tableMargin;
+            const colWidth = tableWidth / 4;
+            const rupee = '\u20B9';
+
             // Outer border for entire document
             doc.setLineWidth(2);
             doc.rect(10, 10, pageWidth - 20, 250);
-            
+
             // Company Header Section with border
             doc.setLineWidth(1);
-            doc.rect(10, 10, pageWidth - 20, 50);
-            
-            // Company logo placeholder (building icon area)
-            doc.setFillColor(70, 130, 180);
-            doc.rect(15, 20, 20, 25, 'F');
-            doc.setTextColor(255, 255, 255);
-            doc.setFontSize(8);
-            doc.setFont('helvetica', 'bold');
-            doc.text('🏢', 23, 35);
-            
-            // Company name and details
+            doc.rect(tableMargin, 15, tableWidth, 50);
+            doc.setFillColor(230, 230, 230); // light gray
+            doc.rect(tableMargin + 10, 25, 25, 25, 'F');
+            doc.setFillColor(70, 130, 180); // blue bottom
+            doc.rect(tableMargin + 10, 50, 25, 5, 'F');
             doc.setTextColor(0, 0, 0);
-            doc.setFontSize(20);
-            doc.setFont('helvetica', 'bold');
-            doc.text('PayFlow Solutions', pageWidth / 2, 30, { align: 'center' });
-            
-            doc.setFontSize(10);
-            doc.setFont('helvetica', 'normal');
-            doc.text('123 Business District, Tech City, State - 123456', pageWidth / 2, 40, { align: 'center' });
-            
-            // Pay Slip title
-            doc.setFontSize(14);
-            doc.setFont('helvetica', 'bold');
-            doc.text(`Pay Slip for ${fullPayslip.cycle}`, pageWidth / 2, 52, { align: 'center' });
-            
+            doc.setFontSize(18);
+            doc.setFont('times', 'bold');
+            doc.text('PFS', tableMargin + 22, 42, { align: 'center' });
+            doc.setTextColor(0, 0, 0);
+            doc.setFontSize(16);
+            doc.setFont('times', 'bold');
+            doc.text('PayFlow Solutions', pageWidth / 2, 35, { align: 'center' });
+            doc.setFontSize(9);
+            doc.setFont('times', 'normal');
+            doc.text('123 Business District, Tech City, State - 123456', pageWidth / 2, 45, { align: 'center' });
+            doc.setFontSize(12);
+            doc.setFont('times', 'bold');
+            doc.text(`Pay Slip for ${payslipMonth} ${payslipYear}`, pageWidth / 2, 57, { align: 'center' });
+
             // Employee Details Table
             let currentY = 70;
             const employeeData = [
-                ['Employee ID', fullPayslip.employeeId?.toString() || '7', 'UAN', '-'],
-                ['Employee Name', employee?.fullName || employee?.firstName || 'Employee', 'PF No.', '-'],
-                ['Designation', employee?.designation || 'Employee', 'ESI No.', '-'],
-                ['Department', employee?.department || 'General', 'Bank', '-'],
-                ['Date of Joining', employee?.joinDate || '2025-07-30', 'Account No.', '-']
+                ['Employee ID', fullPayslip.employeeId?.toString() || '-', 'UAN', bankDetails.uan],
+                ['Employee Name', employee?.fullName || '-', 'PF No.', bankDetails.pfNo],
+                ['Designation', employee?.role || '-', 'ESI No.', bankDetails.esiNo],
+                ['Department', employee?.department || '-', 'Bank', bankDetails.bank],
+                ['Date of Joining', employee?.joiningDate || '-', 'Account No.', bankDetails.accountNo]
             ];
-            
             doc.autoTable({
                 startY: currentY,
-                head: [],
                 body: employeeData,
                 theme: 'grid',
-                styles: { 
-                    fontSize: 10,
-                    cellPadding: 3,
+                styles: {
+                    fontSize: 9,
+                    cellPadding: 2.5,
+                    halign: 'center',
+                    valign: 'middle',
                     lineColor: [0, 0, 0],
-                    lineWidth: 0.5,
-                    halign: 'center' // Center all cells by default
+                    lineWidth: 0.5
                 },
                 columnStyles: {
-                    0: { cellWidth: 40, fontStyle: 'bold', halign: 'center' },
-                    1: { cellWidth: 50, halign: 'center' },
-                    2: { cellWidth: 40, fontStyle: 'bold', halign: 'center' },
-                    3: { cellWidth: 50, halign: 'center' }
-                }
-                        });
-            
+                    0: { cellWidth: colWidth, fontStyle: 'bold', halign: 'center' },
+                    1: { cellWidth: colWidth, halign: 'center' },
+                    2: { cellWidth: colWidth, fontStyle: 'bold', halign: 'center' },
+                    3: { cellWidth: colWidth, halign: 'center' }
+                },
+                margin: { left: tableMargin, right: tableMargin },
+                didDrawPage: (data) => { doc.setPage(1); }
+            });
+
             // Working Days Section
-            currentY = doc.lastAutoTable.finalY + 5;
-            
-            // Use dynamic data or fallback to sample values
-            const baseSalary = fullPayslip.baseSalary || 41666.67;
-            const grossWages = fullPayslip.grossSalary || 61166.67;
-            
+            const workingDays = fullPayslip.workingDays?.toString() || '-';
+            const leaveDays = fullPayslip.leaveDays?.toString() || '0';
+            const presentDays = fullPayslip.presentDays?.toString() || '-';
+            const grossWages = fullPayslip.grossSalary || 0;
             const workingDaysData = [
-                ['Gross Wages', `₹${grossWages.toLocaleString()}`, '', ''],
-                ['Total Working Days', '22', 'Leaves', fullPayslip.numberOfLeaves?.toString() || '0'],
-                ['LOP Days', '0', 'Paid Days', '22']
+                ['Gross Wages', `${rupee}${grossWages.toLocaleString()}`, '', ''],
+                ['Total Working Days', workingDays, 'Leaves', leaveDays],
+                ['LOP Days', '-', 'Paid Days', presentDays]
             ];
-            
             doc.autoTable({
-                startY: currentY,
-                head: [],
+                startY: doc.lastAutoTable.finalY + 2,
                 body: workingDaysData,
                 theme: 'grid',
-                styles: { 
-                    fontSize: 10,
-                    cellPadding: 3,
+                styles: {
+                    fontSize: 9,
+                    cellPadding: 2.5,
+                    halign: 'center',
+                    valign: 'middle',
                     lineColor: [0, 0, 0],
-                    lineWidth: 0.5,
-                    halign: 'center' // Center all cells by default
-                    },
-                    columnStyles: {
-                        0: { cellWidth: 40, fontStyle: 'bold', halign: 'center' },
-                        1: { cellWidth: 50, halign: 'center' },
-                        2: { cellWidth: 40, fontStyle: 'bold', halign: 'center' },
-                        3: { cellWidth: 50, halign: 'center' }
-                    }
+                    lineWidth: 0.5
+                },
+                columnStyles: {
+                    0: { cellWidth: colWidth, fontStyle: 'bold', halign: 'center' },
+                    1: { cellWidth: colWidth, halign: 'center' },
+                    2: { cellWidth: colWidth, fontStyle: 'bold', halign: 'center' },
+                    3: { cellWidth: colWidth, halign: 'center' }
+                },
+                margin: { left: tableMargin, right: tableMargin },
+                didDrawPage: (data) => { doc.setPage(1); }
             });
-            
+
             // Earnings and Deductions Section
-            currentY = doc.lastAutoTable.finalY + 5;
-            
-            // Calculate exact values to match the format
-            const hra = 12500.00;
-            const conveyanceAllowance = 6666.67;
-            const medicalAllowance = 250;
-            const otherAllowances = 333.33;
-            const totalEarnings = 61166.67;
-            
-            const epf = 500.00;
-            const esi = 0;
-            const professionalTax = 4033.33;
-            const totalDeductions = 4533.33;
-            
-            const netSalary = 56633.34;
-            
-            // Create Earnings and Deductions table header
             const earningsDeductionsHeader = [
                 ['Earnings', '', 'Deductions', '']
             ];
-            
             doc.autoTable({
-                startY: currentY,
-                head: [],
+                startY: doc.lastAutoTable.finalY + 2,
                 body: earningsDeductionsHeader,
                 theme: 'grid',
-                styles: { 
-                    fontSize: 11,
-                    cellPadding: 4,
-                    lineColor: [0, 0, 0],
-                    lineWidth: 0.5,
-                    fontStyle: 'bold',
-                    halign: 'center' // Center all cells by default
-                },
-                columnStyles: {
-                    0: { cellWidth: 40, fontStyle: 'bold', halign: 'center' },
-                    1: { cellWidth: 50, halign: 'center' },
-                    2: { cellWidth: 40, fontStyle: 'bold', halign: 'center' },
-                    3: { cellWidth: 50, halign: 'center' }
-                }
-            });
-            
-            // Earnings and Deductions data
-            currentY = doc.lastAutoTable.finalY;
-            const earningsDeductionsData = [
-                ['Basic', `₹${baseSalary.toLocaleString()}`, 'EPF', `₹${epf.toLocaleString()}`],
-                ['HRA', `₹${hra.toLocaleString()}`, 'ESI', `₹${esi.toLocaleString()}`],
-                ['Conveyance Allowance', `₹${conveyanceAllowance.toLocaleString()}`, 'Professional Tax', `₹${professionalTax.toLocaleString()}`],
-                ['Medical Allowance', `₹${medicalAllowance.toLocaleString()}`, '', ''],
-                ['Other Allowances', `₹${otherAllowances.toLocaleString()}`, '', '']
-            ];
-            
-            doc.autoTable({
-                startY: currentY,
-                head: [],
-                body: earningsDeductionsData,
-                theme: 'grid',
-                styles: { 
+                styles: {
                     fontSize: 10,
-                    cellPadding: 3,
-                    lineColor: [0, 0, 0],
-                    lineWidth: 0.5,
-                    halign: 'center' // Center all cells by default
-                },
-                columnStyles: {
-                    0: { cellWidth: 40, fontStyle: 'bold', halign: 'center' },
-                    1: { cellWidth: 50, halign: 'center' },
-                    2: { cellWidth: 40, fontStyle: 'bold', halign: 'center' },
-                    3: { cellWidth: 50, halign: 'center' }
-                }
-            });
-            
-            // Total Earnings and Total Deductions row
-            currentY = doc.lastAutoTable.finalY;
-            const totalsData = [
-                ['Total Earnings', `₹${totalEarnings.toLocaleString()}`, 'Total Deductions', `₹${totalDeductions.toLocaleString()}`]
-            ];
-            
-            doc.autoTable({
-                startY: currentY,
-                head: [],
-                body: totalsData,
-                theme: 'grid',
-                styles: { 
-                    fontSize: 10,
-                    cellPadding: 3,
-                    lineColor: [0, 0, 0],
-                    lineWidth: 0.5,
+                    cellPadding: 2.5,
+                    halign: 'center',
+                    valign: 'middle',
                     fontStyle: 'bold',
-                    halign: 'center' // Center all cells by default
-                },
-                columnStyles: {
-                    0: { cellWidth: 40, fontStyle: 'bold', halign: 'center' },
-                    1: { cellWidth: 50, halign: 'center' },
-                    2: { cellWidth: 40, fontStyle: 'bold', halign: 'center' },
-                    3: { cellWidth: 50, halign: 'center' }
-                }
-            });
-            
-            // Net Salary Section
-            currentY = doc.lastAutoTable.finalY;
-            const netSalaryData = [
-                ['Net Salary', `₹${netSalary.toLocaleString()}`]
-            ];
-            
-            doc.autoTable({
-                startY: currentY,
-                head: [],
-                body: netSalaryData,
-                theme: 'grid',
-                styles: { 
-                    fontSize: 12,
-                    cellPadding: 4,
                     lineColor: [0, 0, 0],
-                    lineWidth: 0.5,
-                    fontStyle: 'bold',
-                    halign: 'center' 
+                    lineWidth: 0.5
                 },
                 columnStyles: {
-                    0: { cellWidth: 90, halign: 'center' },
-                    1: { cellWidth: 90, halign: 'center' }
-                }
+                    0: { cellWidth: colWidth, halign: 'center', fontStyle: 'bold' },
+                    1: { cellWidth: colWidth, halign: 'center', fontStyle: 'bold' },
+                    2: { cellWidth: colWidth, halign: 'center', fontStyle: 'bold' },
+                    3: { cellWidth: colWidth, halign: 'center', fontStyle: 'bold' }
+                },
+                margin: { left: tableMargin, right: tableMargin },
+                didDrawPage: (data) => { doc.setPage(1); }
             });
 
-            doc.save(`Payslip-${employee?.fullName || fullPayslip.employeeId}-${fullPayslip.cycle}.pdf`);
+            // Earnings and Deductions data
+            const baseSalary = fullPayslip.basicSalary || 0;
+            const hra = fullPayslip.hra || 0;
+            const allowances = fullPayslip.allowances || 0;
+            const bonuses = fullPayslip.bonuses || 0;
+            const pfDeduction = fullPayslip.pfDeduction || 0;
+            const taxDeduction = fullPayslip.taxDeduction || 0;
+            const otherDeductions = fullPayslip.otherDeductions || 0;
+            const unpaidLeaveDeduction = fullPayslip.unpaidLeaveDeduction || 0;
+            const earningsDeductionsData = [
+                ['Basic', `${rupee}${baseSalary.toLocaleString()}`, 'PF Deduction', `${rupee}${pfDeduction.toLocaleString()}`],
+                ['HRA', `${rupee}${hra.toLocaleString()}`, 'Tax Deduction', `${rupee}${taxDeduction.toLocaleString()}`],
+                ['Allowances', `${rupee}${allowances.toLocaleString()}`, 'Other Deductions', `${rupee}${otherDeductions.toLocaleString()}`],
+                ['Bonuses', `${rupee}${bonuses.toLocaleString()}`, 'Unpaid Leave Deduction', `${rupee}${unpaidLeaveDeduction.toLocaleString()}`],
+            ];
+            doc.autoTable({
+                startY: doc.lastAutoTable.finalY + 2,
+                body: earningsDeductionsData,
+                theme: 'grid',
+                styles: {
+                    fontSize: 9,
+                    cellPadding: 2.5,
+                    halign: 'center',
+                    valign: 'middle',
+                    lineColor: [0, 0, 0],
+                    lineWidth: 0.5
+                },
+                columnStyles: {
+                    0: { cellWidth: colWidth, halign: 'center' },
+                    1: { cellWidth: colWidth, halign: 'center' },
+                    2: { cellWidth: colWidth, halign: 'center' },
+                    3: { cellWidth: colWidth, halign: 'center' }
+                },
+                margin: { left: tableMargin, right: tableMargin },
+                didDrawPage: (data) => { doc.setPage(1); }
+            });
+
+            // Total Earnings and Total Deductions row
+            const totalEarnings = fullPayslip.grossSalary || 0;
+            const totalDeductions = fullPayslip.totalDeductions || 0;
+            const totalsData = [
+                ['Total Earnings', `${rupee}${totalEarnings.toLocaleString()}`, 'Total Deductions', `${rupee}${totalDeductions.toLocaleString()}`]
+            ];
+            doc.autoTable({
+                startY: doc.lastAutoTable.finalY + 2,
+                body: totalsData,
+                theme: 'grid',
+                styles: {
+                    fontSize: 9,
+                    cellPadding: 2.5,
+                    halign: 'center',
+                    valign: 'middle',
+                    fontStyle: 'bold',
+                    lineColor: [0, 0, 0],
+                    lineWidth: 0.5
+                },
+                columnStyles: {
+                    0: { cellWidth: colWidth, halign: 'center', fontStyle: 'bold' },
+                    1: { cellWidth: colWidth, halign: 'center', fontStyle: 'bold' },
+                    2: { cellWidth: colWidth, halign: 'center', fontStyle: 'bold' },
+                    3: { cellWidth: colWidth, halign: 'center', fontStyle: 'bold' }
+                },
+                margin: { left: tableMargin, right: tableMargin },
+                didDrawPage: (data) => { doc.setPage(1); }
+            });
+
+            // Net Salary Section
+            const netSalary = fullPayslip.netPay || (totalEarnings - totalDeductions);
+            const netSalaryData = [
+                ['Net Salary', `${rupee}${netSalary.toLocaleString()}`]
+            ];
+            doc.autoTable({
+                startY: doc.lastAutoTable.finalY + 2,
+                body: netSalaryData,
+                theme: 'grid',
+                styles: {
+                    fontSize: 10,
+                    cellPadding: 2.5,
+                    halign: 'center',
+                    valign: 'middle',
+                    fontStyle: 'bold',
+                    lineColor: [0, 0, 0],
+                    lineWidth: 0.5
+                },
+                columnStyles: {
+                    0: { cellWidth: tableWidth / 2, halign: 'center', fontStyle: 'bold' },
+                    1: { cellWidth: tableWidth / 2, halign: 'center', fontStyle: 'bold' }
+                },
+                margin: { left: tableMargin, right: tableMargin },
+                didDrawPage: (data) => { doc.setPage(1); }
+            });
+
+            doc.save(`Payslip-${employee?.fullName || fullPayslip.employeeId}-${payslipMonth}-${payslipYear}.pdf`);
             
             showMessage('success', 'Payslip downloaded successfully');
             
@@ -392,10 +416,117 @@ const EmployeeCTCDashboard = () => {
         <div className="employee-dashboard-layout">
             <EmployeeSidebar />
             <div className="employee-ctc-dashboard">
-                <div className="dashboard-header">
-                    <h1>My Compensation & Payroll</h1>
-                    <p>View your CTC details and download payslips</p>
+                <div className="dashboard-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '1rem', position: 'relative' }}>
+                    <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', zIndex: 1 }}>
+                        <h1 style={{ textAlign: 'center', marginBottom: '0.5rem', width: '100%' }}>My Compensation & Payroll</h1>
+                        <p style={{ textAlign: 'center', marginTop: 0, width: '100%' }}>View your CTC details and download payslips</p>
+                    </div>
+                    <button
+                        className="bank-details-btn"
+                        onClick={() => setShowBankModal(true)}
+                        style={{
+                            position: 'absolute',
+                            right: '0',
+                            top: '50%',
+                            transform: 'translateY(-50%)',
+                            background: 'linear-gradient(90deg, #7b2ff2 0%, #f357a8 100%)',
+                            color: '#fff',
+                            border: 'none',
+                            borderRadius: '24px',
+                            padding: '10px 24px',
+                            fontWeight: 'bold',
+                            fontSize: '1rem',
+                            boxShadow: '0 2px 8px rgba(123,47,242,0.08)',
+                            cursor: 'pointer',
+                            transition: 'background 0.2s, box-shadow 0.2s',
+                            marginLeft: 'auto',
+                            zIndex: 2
+                        }}
+                        onMouseOver={e => e.currentTarget.style.background = 'linear-gradient(90deg, #f357a8 0%, #7b2ff2 100%)'}
+                        onMouseOut={e => e.currentTarget.style.background = 'linear-gradient(90deg, #7b2ff2 0%, #f357a8 100%)'}
+                    >
+                        Add/Edit Bank Details
+                    </button>
                 </div>
+            {/* Bank Details Modal */}
+            {showBankModal && (
+                <div style={{
+                    position: 'fixed',
+                    top: 0,
+                    left: 0,
+                    width: '100vw',
+                    height: '100vh',
+                    background: 'rgba(60, 0, 100, 0.18)',
+                    zIndex: 9999,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                }}>
+                    <div style={{
+                        background: '#fff',
+                        borderRadius: '18px',
+                        boxShadow: '0 8px 32px rgba(123,47,242,0.18)',
+                        padding: '2rem 2.5rem',
+                        minWidth: '340px',
+                        maxWidth: '90vw',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '1.2rem',
+                        position: 'relative'
+                    }}>
+                        <h2 style={{
+                            margin: 0,
+                            fontSize: '1.35rem',
+                            fontWeight: 700,
+                            color: '#7b2ff2',
+                            textAlign: 'center'
+                        }}>Bank & Statutory Details</h2>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
+                            <label style={{ fontWeight: 500, color: '#333' }}>UAN:
+                                <input type="text" value={bankDetails.uan} onChange={e => setBankDetails({ ...bankDetails, uan: e.target.value })} style={{ marginLeft: '0.5rem', borderRadius: '8px', border: '1px solid #ccc', padding: '7px 12px', width: '70%' }} />
+                            </label>
+                            <label style={{ fontWeight: 500, color: '#333' }}>PF No.:
+                                <input type="text" value={bankDetails.pfNo} onChange={e => setBankDetails({ ...bankDetails, pfNo: e.target.value })} style={{ marginLeft: '0.5rem', borderRadius: '8px', border: '1px solid #ccc', padding: '7px 12px', width: '70%' }} />
+                            </label>
+                            <label style={{ fontWeight: 500, color: '#333' }}>ESI No.:
+                                <input type="text" value={bankDetails.esiNo} onChange={e => setBankDetails({ ...bankDetails, esiNo: e.target.value })} style={{ marginLeft: '0.5rem', borderRadius: '8px', border: '1px solid #ccc', padding: '7px 12px', width: '70%' }} />
+                            </label>
+                            <label style={{ fontWeight: 500, color: '#333' }}>Bank:
+                                <input type="text" value={bankDetails.bank} onChange={e => setBankDetails({ ...bankDetails, bank: e.target.value })} style={{ marginLeft: '0.5rem', borderRadius: '8px', border: '1px solid #ccc', padding: '7px 12px', width: '70%' }} />
+                            </label>
+                            <label style={{ fontWeight: 500, color: '#333' }}>Account No.:
+                                <input type="text" value={bankDetails.accountNo} onChange={e => setBankDetails({ ...bankDetails, accountNo: e.target.value })} style={{ marginLeft: '0.5rem', borderRadius: '8px', border: '1px solid #ccc', padding: '7px 12px', width: '70%' }} />
+                            </label>
+                        </div>
+                        <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', marginTop: '0.5rem' }}>
+                            <button onClick={handleBankDetailsSave} style={{
+                                background: 'linear-gradient(90deg, #7b2ff2 0%, #f357a8 100%)',
+                                color: '#fff',
+                                border: 'none',
+                                borderRadius: '18px',
+                                padding: '8px 22px',
+                                fontWeight: 'bold',
+                                fontSize: '1rem',
+                                boxShadow: '0 2px 8px rgba(123,47,242,0.08)',
+                                cursor: 'pointer',
+                                transition: 'background 0.2s, box-shadow 0.2s'
+                            }}>Save</button>
+                            <button onClick={() => setShowBankModal(false)} style={{
+                                background: '#eee',
+                                color: '#7b2ff2',
+                                border: 'none',
+                                borderRadius: '18px',
+                                padding: '8px 22px',
+                                fontWeight: 'bold',
+                                fontSize: '1rem',
+                                boxShadow: '0 2px 8px rgba(123,47,242,0.08)',
+                                cursor: 'pointer',
+                                transition: 'background 0.2s, box-shadow 0.2s'
+                            }}>Cancel</button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {message.text && (
                 <div className={`message ${message.type}`}>

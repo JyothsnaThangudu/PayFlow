@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { FaEye, FaEyeSlash } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import './Login.css';
@@ -11,6 +12,18 @@ const UnifiedLogin = () => {
     const navigate = useNavigate();
     const [showPassword, setShowPassword] = useState(false);
     const [popup, setPopup] = useState({ show: false, title: '', message: '', type: 'success' });
+
+    // Clear localStorage on login page load to remove any previous role
+    React.useEffect(() => {
+        localStorage.removeItem('role');
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('email');
+        localStorage.removeItem('name');
+        localStorage.removeItem('userId');
+        localStorage.removeItem('managerId');
+        localStorage.removeItem('userEmail');
+        localStorage.removeItem('employeeId');
+    }, []);
 
 
     const handleLogin = async (e) => {
@@ -98,33 +111,41 @@ const UnifiedLogin = () => {
 
     return (
         <div className="login-container">
-            {popup.show && (
-                <PopupMessage title={popup.title} message={popup.message} type={popup.type} onClose={() => setPopup({ ...popup, show: false })} />
-            )}
             <h2>PayFlow AI - Login</h2>
             <form onSubmit={handleLogin}>
                 <input
                     type="text"
-                    placeholder="Email / Employee ID"
+                    placeholder="Email"
                     value={emailOrId}
                     onChange={(e) => setEmailOrId(e.target.value)}
                     required
+                    className="login-input"
                 />
-                <input
-                    type={showPassword ? "text" : "password"}
-                    placeholder="Password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                />
-                <label>
-                    <input type="checkbox" checked={showPassword} onChange={() => setShowPassword(!showPassword)} />
-                    Show Password
-                </label>
-
+                <div className="login-password-wrapper">
+                    <input
+                        type={showPassword ? "text" : "password"}
+                        placeholder="Password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        required
+                        className="login-input"
+                    />
+                    <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="login-password-eye"
+                        aria-label={showPassword ? 'Hide password' : 'Show password'}
+                        tabIndex={0}
+                    >
+                        {showPassword ? <FaEye style={{ color: '#6366f1' }} /> : <FaEyeSlash style={{ color: '#6366f1' }} />}
+                    </button>
+                </div>
                 {error && <p className="error" style={{ color: 'red' }}>{error}</p>}
                 <button type="submit">Login</button>
             </form>
+            {popup.show && (
+                <PopupMessage title={popup.title} message={popup.message} type={popup.type} onClose={() => setPopup({ ...popup, show: false })} />
+            )}
         </div>
     );
 };
@@ -135,101 +156,3 @@ export default UnifiedLogin;
 
 
 
-// import React, { useState } from 'react';
-// import { useNavigate } from 'react-router-dom';
-// import axios from 'axios';
-// import './Login.css';
-// import Swal from 'sweetalert2';
-//
-//
-// const UnifiedLogin = () => {
-//     const [emailOrId, setEmailOrId] = useState('');
-//     const [password, setPassword] = useState('');
-//     const [error, setError] = useState('');
-//     const navigate = useNavigate();
-//
-//     const handleLogin = async (e) => {
-//         e.preventDefault();
-//         setError("");
-//
-//         // Admin shortcut login (frontend-only)
-//         if (emailOrId === 'admin@payflow.com' && password === 'admin123') {
-//             localStorage.setItem('role', 'ADMIN');
-//             localStorage.setItem('authToken', 'static-admin-token'); // if needed
-//             Swal.fire({
-//                 icon: 'success',
-//                 title: 'Login Successful',
-//                 text: 'Welcome Admin!',
-//                 timer: 2000,
-//                 showConfirmButton: false,
-//             });
-//
-//             navigate('/admin-dashboard');
-//             return;
-//         }
-//
-//         // Optional: Map employee ID to email
-//         const employeeIdToEmail = {
-//             "E001": "john@example.com",
-//             "E002": "sarah@example.com"
-//             // add as needed
-//         };
-//
-//         let finalEmail = emailOrId;
-//         if (employeeIdToEmail[emailOrId]) {
-//             finalEmail = employeeIdToEmail[emailOrId];
-//         }
-//
-//         try {
-//             const res = await axios.post("http://localhost:8080/api/login", {
-//                 username: finalEmail,
-//                 password: password,
-//             });
-//
-//             const { token, role, firstLogin } = res.data;
-//
-//             localStorage.setItem("authToken", token);
-//             localStorage.setItem("role", role);
-//             localStorage.setItem("email", finalEmail);
-//
-//             if (firstLogin) {
-//                 navigate("/reset-password");
-//             } else {
-//                 if (role === "HR") navigate("/hr-dashboard");
-//                 else if (role === "MANAGER") navigate("/manager-dashboard");
-//                 else if (role === "EMPLOYEE") navigate("/employee-dashboard");
-//                 else navigate("/");
-//             }
-//         } catch (err) {
-//             setError("Invalid credentials. Please try again.");
-//         }
-//     };
-//
-//
-//
-//     return (
-//         <div className="login-container">
-//             <h2>PayFlow AI - Login</h2>
-//             <form onSubmit={handleLogin}>
-//                 <input
-//                     type="text"
-//                     placeholder="Email / Employee ID"
-//                     value={emailOrId}
-//                     onChange={(e) => setEmailOrId(e.target.value)}
-//                     required
-//                 />
-//                 <input
-//                     type="password"
-//                     placeholder="Password"
-//                     value={password}
-//                     onChange={(e) => setPassword(e.target.value)}
-//                     required
-//                 />
-//                 {error && <p className="error" style={{ color: 'red' }}>{error}</p>}
-//                 <button type="submit">Login</button>
-//             </form>
-//         </div>
-//     );
-// };
-//
-// export default UnifiedLogin;

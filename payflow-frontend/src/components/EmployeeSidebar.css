@@ -46,7 +46,7 @@
     text-align: left;
     border-radius: 8px;
     transition: background 0.2s;
-    text-decoration: none;
+    text-decoration: none !important;
 }
 
 .employee-sidebar .sidebar-btn.active, 

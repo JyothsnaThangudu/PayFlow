@@ -1,12 +1,78 @@
 import React, { useEffect, useState, useMemo } from 'react';
+import UpcomingHolidays from '../components/UpcomingHolidays';
+import UpcomingHolidaysModal from '../components/UpcomingHolidaysModal';
 import jsPDF from 'jspdf';
 import EmployeeSidebar from '../components/EmployeeSidebar';
 import './EmployeeDashboard.css';
 import PayslipViewer from './PayslipViewer';
 import axios from 'axios';
-import { FaUserCircle, FaBuilding, FaBriefcase, FaCalendarAlt, FaEnvelope, FaPhone, FaMoneyBill, FaClipboardList, FaBell } from 'react-icons/fa';
+import { FaUserCircle, FaBuilding, FaBriefcase, FaCalendarAlt, FaEnvelope, FaPhone, FaMoneyBill, FaClipboardList, FaBell, FaCheckCircle, FaTimesCircle, FaCalendarCheck } from 'react-icons/fa';
 
 const EmployeeDashboard = () => {
+  // Attendance tracking - fetch from backend
+  const [attendance, setAttendance] = useState({});
+  const today = new Date();
+  const daysInMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
+  const currentDay = today.getDate();
+
+  // Function to fetch attendance
+  const fetchAttendance = () => {
+    const employeeId = localStorage.getItem("employeeId");
+    if (!employeeId) return;
+    fetch(`http://localhost:8080/api/attendance/month?employeeId=${employeeId}&year=${today.getFullYear()}&month=${today.getMonth()+1}`)
+      .then(res => res.json())
+      .then(data => {
+        console.log('Attendance API response:', data); // Debug log
+        if (Array.isArray(data)) {
+          data.forEach((record, idx) => {
+            console.log(`Attendance record ${idx}:`, record);
+          });
+        }
+        const att = {};
+        data.forEach(record => {
+          const day = new Date(record.date).getDate();
+          att[day] = record.present ? 'present' : 'absent';
+        });
+        setAttendance(att);
+      })
+      .catch(() => {
+        setAttendance({});
+      });
+  };
+
+  // Mark today's attendance as present, then reload attendance
+  useEffect(() => {
+    const employeeId = localStorage.getItem("employeeId");
+    if (!employeeId) return;
+    // Mark attendance for today (send as request params)
+    fetch(`http://localhost:8080/api/attendance/mark?employeeId=${employeeId}&present=true`, {
+      method: 'POST'
+    })
+      .then(() => {
+        fetchAttendance();
+      })
+      .catch(() => {
+        fetchAttendance();
+      });
+  }, [localStorage.getItem("employeeId")]);
+  const [holidays, setHolidays] = useState([]);
+  const [showHolidayModal, setShowHolidayModal] = useState(false);
+    // Fetch upcoming holidays (real, not hardcoded)
+    useEffect(() => {
+        axios
+          .get(
+            'https://www.googleapis.com/calendar/v3/calendars/en.indian%23holiday%40group.v.calendar.google.com/events?key=AIzaSyBg2vIsbKXDUcVzPJyRIWtCE3lEiy1-Qvo'
+          )
+          .then((res) => {
+            const today = new Date();
+            const upcoming = res.data.items.filter((holiday) => {
+              const holidayDate = new Date(holiday.start.date);
+              return holidayDate >= today;
+            });
+            setHolidays(upcoming);
+          })
+          .catch((err) => console.error('Failed to fetch holidays', err));
+    }, []);
   const [employee, setEmployee] = useState(null);
   const email = localStorage.getItem('userEmail');
   const employeeId = localStorage.getItem("employeeId");
@@ -305,50 +371,7 @@ const handleFetchPayslip = async (payslipId) => {
   };
 
 
-//  const [payslipData, setPayslipData] = useState(null);
 
-//   const handleFetchPayslip = async (payslipId) => {
-//     try {
-//       const res = await fetch(
-//         `http://localhost:8080/api/ctc-management/payslip/download/${payslipId}`
-//       );
-
-//       if (!res.ok) {
-//         throw new Error(`Failed to fetch payslip. Status: ${res.status}`);
-//       }
-
-//       const data = await res.json();
-//       setPayslipData(data); // This triggers PayslipViewer to run its PDF download logic
-//     } catch (err) {
-//       console.error("Error fetching payslip:", err);
-//     }
-//   };
-   
-    // Example: handleFetchPayslip.js
-// const handleFetchPayslip = async () => {
-//   try {
-//     const response = await fetch("http://localhost:8080/api/employee/payslip/download", {
-//       method: "GET",
-//     //   headers: {
-//     //     "Content-Type": "application/pdf",
-//     //   },
-//     });
-
-//     if (!response.ok) throw new Error("Failed to fetch payslip");
-
-//     const blob = await response.blob();
-//     const url = window.URL.createObjectURL(new Blob([blob]));
-//     const link = document.createElement("a");
-//     link.href = url;
-//     link.setAttribute("download", `Payslip_${new Date().toLocaleString("default", { month: "long" })}.pdf`);
-//     document.body.appendChild(link);
-//     link.click();
-//     link.parentNode.removeChild(link);
-//   } catch (error) {
-//     console.error(error);
-//     alert("Error downloading payslip");
-//   }
-// };
 
 
     const remainingLeaves = Math.max(0, totalLeaves - leaveStats.usedPaidLeaves);
@@ -444,10 +467,10 @@ const handleFetchPayslip = async (payslipId) => {
             <div className="employee-dashboard-content">
                 <div className="profile-header">
                     <div className="profile-avatar">
-                        <FaUserCircle size={72} color="#6366f1" />
+                        <FaUserCircle size={80} color="#fff" />
                     </div>
                     <div className="profile-header-info">
-                        <h2>{employee ? `Welcome ${employee.fullName}!` : 'Welcome!'}</h2>
+                        <h2>{employee ? `Welcome, ${employee.fullName}` : 'Welcome!'}</h2>
                         {employee && (
                             <div className="profile-header-meta">
                                 <span><FaBuilding /> {employee.department}</span>
@@ -458,109 +481,180 @@ const handleFetchPayslip = async (payslipId) => {
                     </div>
                 </div>
 
+                {/* First row: Leave Summary & Payroll & Attendance */}
                 <div className="dashboard-cards">
-                    <div className="dashboard-card notifications-card">
-                        <h3><FaBell /> Notifications</h3>
-                        <ul className="notifications-list">
-                            {notifications.length > 0 ? (
-                                notifications.map(notification => (
-                                    <li key={notification.id} className={`notification-item ${notification.type}`}>
-                                        <div className="notification-content">
-                                            <strong>{notification.title}</strong>
-                                            <p>{notification.message}</p>
-                                            {notification.date && (
-                                                <small>Hold placed on: {formatDate(notification.date)}</small>
-                                            )}
-                                        </div>
-                                    </li>
-                                ))
-                            ) : (
-                                <li>No new notifications.</li>
-                            )}
-                        </ul>
-                    </div>
-
-                    {/* Reminders Section */}
-                    <div className="dashboard-card reminders-card">
-                        <h3><FaClipboardList /> Reminders</h3>
-                        <ul className="reminders-list">
-                            {reminders.length > 0 ? (
-                                reminders.slice(0, 2).map(rem => (
-                                    <li key={rem.id} className="reminder-item">
-                                        <div className="reminder-content">
-                                            <strong>{rem.text}</strong>
-                                            <p>Date: {formatDate(rem.date)} | Time: {rem.time}</p>
-                                        </div>
-                                    </li>
-                                ))
-                            ) : (
-                                <li>No reminders from your manager.</li>
-                            )}
-                        </ul>
-                        {reminders.length > 2 && (
-                            <button className="quick-link-btn" onClick={() => window.location.href = '/employee-reminders'}>View All</button>
-                        )}
-                    </div>
-
-                    <div className="dashboard-card leave-card">
-                        <h3><FaClipboardList /> Leave Summary</h3>
-                        <div style={{ marginBottom: '12px' }}>
-                            <p style={{ margin: '4px 0' }}><b>Paid Leaves:</b></p>
-                            <p style={{ margin: '2px 0', fontSize: '14px' }}>
-                                <span style={{ color: '#6366f1' }}>Total: {leaveStats.totalPaidLeaves}</span> | 
-                                <span style={{ color: 'tomato', marginLeft: '8px' }}>Used: {leaveStats.usedPaidLeaves}</span> | 
-                                <span style={{ color: '#22c55e', marginLeft: '8px' }}>Remaining: {leaveStats.remainingPaidLeaves}</span>
-                            </p>
+                  <div className="dashboard-card leave-card" style={{marginRight: '64px'}}>
+                    <h3><FaClipboardList /> Leave Summary</h3>
+                    <div>
+                      <div style={{ marginBottom: '16px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                          <span style={{ color: '#6366f1', fontWeight: 600 }}>Paid:</span>
+                          <span style={{ color: '#6366f1' }}>Total: {leaveStats.totalPaidLeaves}</span>
+                          <span style={{ color: 'tomato' }}>Used: {leaveStats.usedPaidLeaves}</span>
+                          <span style={{ color: '#22c55e' }}>Remaining: {leaveStats.remainingPaidLeaves}</span>
                         </div>
-                        <div style={{ marginBottom: '12px' }}>
-                            <p style={{ margin: '4px 0' }}><b>Unpaid Leaves:</b></p>
-                            <p style={{ margin: '2px 0', fontSize: '14px' }}>
-                                <span style={{ color: 'orange' }}>Year Total: {leaveStats.usedUnpaidLeaves}</span> | 
-                                <span style={{ color: 'red', marginLeft: '8px' }}>This Month: {leaveStats.unpaidLeavesThisMonth}</span>
-                            </p>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                          <span style={{ color: 'orange', fontWeight: 600 }}>Unpaid:</span>
+                          <span>Year: {leaveStats.usedUnpaidLeaves}</span>
+                          <span style={{ color: 'red' }}>This Month: {leaveStats.unpaidLeavesThisMonth}</span>
                         </div>
-                        <p style={{ fontSize: '12px', color: '#666', fontStyle: 'italic' }}>
-                            Note: After using all paid leaves, additional requests will be unpaid.
-                        </p>
+                      </div>
+                      <p style={{ fontSize: '13px', color: '#64748b', fontStyle: 'italic', marginTop: '8px' }}>
+                        After using all paid leaves, additional requests will be unpaid.
+                      </p>
                     </div>
+                  </div>
+                  <div className="dashboard-card payroll-card" style={{marginRight: '64px'}}>
+                    <h3><FaMoneyBill /> Payroll</h3>
+                    <div>
+                      {paymentHoldStatus && paymentHoldStatus.isOnHold ? (
+                        <div className="payment-hold-alert">
+                          <div className="hold-status">
+                            <span className="hold-badge">⏸️ Payment On Hold</span>
+                            <p><b>Reason:</b> {paymentHoldStatus.holdReason || 'Administrative review'}</p>
+                            <p><b>Hold Date:</b> {formatDate(paymentHoldStatus.holdDate)}</p>
+                            <small>Please contact HR for more information.</small>
+                          </div>
+                        </div>
+                      ) : (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                            <span style={{ fontWeight: 600 }}>Basic Salary:</span>
+                            <span style={{ color: '#6366f1', fontWeight: 600 }}>
+                              {employeePayslip?.netPay ? `₹${employeePayslip.basicSalary}` : "Not Available"}
+                            </span>
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                            <span style={{ fontWeight: 600 }}>Net Salary:</span>
+                            <span style={{ color: '#22c55e', fontWeight: 600 }}>
+                              {employeePayslip?.netPay ? `₹${employeePayslip.netPay}` : "Not Available"}
+                            </span>
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                            <span style={{ fontWeight: 600 }}>Payment Status:</span>
+                            <span style={{ color: employeePayslip?.status === 'Paid' ? '#22c55e' : '#f59e42', fontWeight: 600 }}>
+                              {employeePayslip?.status ? employeePayslip.status : 'Pending'}
+                            </span>
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                            <span style={{ fontWeight: 600 }}>Next Scheduled Payment:</span>
+                            <span style={{ color: '#6366f1', fontWeight: 600 }}>
+                              {employeePayslip?.nextPaymentDate
+                                ? formatDate(employeePayslip.nextPaymentDate)
+                                : (() => {
+                                    const now = new Date();
+                                    const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+                                    return formatDate(lastDay);
+                                  })()
+                              }
+                            </span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  {/* Attendance Tracking Card */}
+                  <div className="dashboard-card attendance-card">
+                    <h3><FaCalendarCheck /> Attendance</h3>
+                    <div style={{ marginBottom: '10px', fontWeight: 600 }}>
+                      Today's Status: {
+                        attendance.hasOwnProperty(currentDay)
+                          ? attendance[currentDay] === 'present'
+                            ? (<span style={{ color: '#22c55e', display: 'inline-flex', alignItems: 'center' }}><FaCheckCircle style={{marginRight: 4}}/> Present</span>)
+                            : (<span style={{ color: 'tomato', display: 'inline-flex', alignItems: 'center' }}><FaTimesCircle style={{marginRight: 4}}/> Absent</span>)
+                          : (<span style={{ color: '#64748b', display: 'inline-flex', alignItems: 'center' }}><FaCalendarAlt style={{marginRight: 4}}/> Not Marked</span>)
+                      }
+                    </div>
+                    <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', justifyContent: 'center', marginTop: 8 }}>
+                      {Array.from({length: daysInMonth}, (_, i) => i + 1).map(day => {
+                        let status = attendance.hasOwnProperty(day) ? attendance[day] : 'not-marked';
+                        let style = {
+                          width: 22,
+                          height: 22,
+                          borderRadius: '50%',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontSize: 13,
+                          margin: '1px',
+                        };
+                        if (status === 'present') {
+                          style.background = '#22c55e';
+                          style.color = '#fff';
+                          style.border = '2px solid #22c55e';
+                          style.boxShadow = '0 2px 6px rgba(34,197,94,0.12)';
+                        } else if (status === 'absent') {
+                          style.background = '#e5e7eb';
+                          style.color = 'tomato';
+                          style.border = '2px solid tomato';
+                        } else {
+                          style.background = '#e5e7eb';
+                          style.color = '#64748b';
+                          style.border = '2px solid #e5e7eb';
+                        }
+                        return (
+                          <span key={day} style={style} title={`Day ${day}: ${status}`}>{day}</span>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
 
-                    <div className="dashboard-card payroll-card">
-                        <h3><FaMoneyBill /> Payroll</h3>
-                        {paymentHoldStatus && paymentHoldStatus.isOnHold ? (
-                            <div className="payment-hold-alert">
-                                <div className="hold-status">
-                                    <span className="hold-badge">⏸️ Payment On Hold</span>
-                                    <p><b>Reason:</b> {paymentHoldStatus.holdReason || 'Administrative review'}</p>
-                                    <p><b>Hold Date:</b> {formatDate(paymentHoldStatus.holdDate)}</p>
-                                    <small>Please contact HR for more information.</small>
-                                </div>
+                {/* Second row: Upcoming Holidays & Reminders */}
+                <div className="dashboard-cards">
+                  <div className="dashboard-card holidays-card" style={{marginRight: '64px'}}>
+                    <h3><FaCalendarAlt /> Upcoming Holidays</h3>
+                    <ul className="holidays-list">
+                      {holidays.length > 0 ? (
+                        holidays.slice(0, 2).map((holiday, idx) => (
+                          <li key={idx} className="holiday-item">
+                            <strong>{holiday.summary}</strong>
+                            <span style={{ marginLeft: '10px', color: '#6366f1', fontWeight: 500 }}>{formatDate(holiday.start.date)}</span>
+                          </li>
+                        ))
+                      ) : (
+                        <li style={{ color: '#64748b', fontStyle: 'italic' }}>No upcoming holidays found.</li>
+                      )}
+                    </ul>
+                    {holidays.length > 2 && (
+                      <button className="quick-link-btn" onClick={() => setShowHolidayModal(true)}>View All</button>
+                    )}
+                  </div>
+                  <div className="dashboard-card reminders-card">
+                    <h3><FaBell /> Reminders</h3>
+                    <ul className="reminders-list">
+                      {reminders.length > 0 ? (
+                        reminders.slice(0, 2).map(rem => (
+                          <li key={rem.id} className="reminder-item">
+                            <div className="reminder-content">
+                              <strong>{rem.text}</strong>
+                              <p style={{ color: '#6366f1', fontWeight: 500 }}>Date: {formatDate(rem.date)} | Time: {rem.time}</p>
                             </div>
-                        ) : (
-                            <>
-                                <b>Basaly Salary:</b>{" "}
-                                <span style={{ color: '#6366f1' }}>
-                                    {employeePayslip?.netPay ? `₹${employeePayslip.basicSalary}` : "Not Available"}
-                                </span><br/>
-                                <br/>
-                                <b>Net Salary:</b>{" "}
-                                <span style={{ color: '#6366f1' }}>
-                                    {employeePayslip?.netPay ? `₹${employeePayslip.netPay}` : "Not Available"}
-                                </span><br/>
-                                <button onClick={() => handleFetchPayslip(latestPayslipId)}>Download Payslip</button>
-
-                            </>
-                        )}
-                    </div>
+                          </li>
+                        ))
+                      ) : (
+                        <li style={{ color: '#64748b', fontStyle: 'italic' }}>No reminders from your manager.</li>
+                      )}
+                    </ul>
+                    {reminders.length > 2 && (
+                      <button className="quick-link-btn" onClick={() => window.location.href = '/employee-reminders'}>View All</button>
+                    )}
+                  </div>
                 </div>
 
                 <div className="quick-links">
-                    <button className="quick-link-btn">Update Profile</button>
-                    <button className="quick-link-btn">Change Password</button>
-                    <button className="quick-link-btn">Contact HR</button>
+                  {/* Holidays Modal */}
+                  {showHolidayModal && (
+                    <UpcomingHolidaysModal
+                      isOpen={showHolidayModal}
+                      onClose={() => setShowHolidayModal(false)}
+                      holidays={holidays}
+                    />
+                  )}
                 </div>
             </div>
         </div>
     );
-};
 
+}
 export default EmployeeDashboard;

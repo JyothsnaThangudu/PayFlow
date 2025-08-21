@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import Sidebar from '../components/SidebarAdmin';
 import PopupMessage from '../components/PopupMessage';
+import ConfirmationModal from '../components/ConfirmationModal';
 import './AdminDashboard.css';
 
 
@@ -12,6 +13,9 @@ const EmployeeOverview = () => {
     const [popup, setPopup] = useState({ show: false, title: '', message: '', type: 'success' });
     const [currentPage, setCurrentPage] = useState(1);
     const [rowsPerPage, setRowsPerPage] = useState(10);
+    // Confirmation modal state
+    const [confirmModal, setConfirmModal] = useState({ open: false, username: null, action: null });
+
     // Filter users by search
     const filteredUsers = users.filter(user => {
         const q = search.toLowerCase();
@@ -30,45 +34,41 @@ const EmployeeOverview = () => {
             .catch(err => console.error('Failed to fetch users', err));
     }, []);
 
-    // Handler to disable user (like AdminDashboard)
-    const handleDisableUser = async (username) => {
-        const confirm = window.confirm("Are you sure you want to disable this user?");
-        if (!confirm) return;
+    // Handler to disable user (uses confirmation modal)
+    const handleDisableUser = (username) => {
+        setConfirmModal({ open: true, username, action: 'disable' });
+    };
 
+    // Handler to enable user (uses confirmation modal)
+    const handleEnableUser = (username) => {
+        setConfirmModal({ open: true, username, action: 'enable' });
+    };
+
+    const confirmUserAction = async () => {
+        if (!confirmModal.username || !confirmModal.action) return;
         try {
-            const res = await axios.put(`http://localhost:8080/api/admin/disable-user`, {
-                username: username,
-            });
-
-            setPopup({ show: true, title: 'User Disabled', message: res.data.message || 'User has been disabled.', type: 'success' });
+            let res;
+            if (confirmModal.action === 'disable') {
+                res = await axios.put(`http://localhost:8080/api/admin/disable-user`, {
+                    username: confirmModal.username,
+                });
+                setPopup({ show: true, title: 'User Disabled', message: res.data.message || 'User has been disabled.', type: 'success' });
+            } else if (confirmModal.action === 'enable') {
+                res = await axios.put(`http://localhost:8080/api/admin/enable-user`, {
+                    username: confirmModal.username,
+                });
+                setPopup({ show: true, title: 'User Enabled', message: res.data.message || 'User has been enabled.', type: 'success' });
+            }
             // Refresh user list
             const updatedUsers = await axios.get('http://localhost:8080/api/admin/users');
             setUsers(updatedUsers.data);
         } catch (err) {
-            setPopup({ show: true, title: 'Failed', message: err.response?.data?.message || 'Failed to disable user', type: 'error' });
-            console.error('Disable user error:', err);
+            setPopup({ show: true, title: 'Failed', message: err.response?.data?.message || `Failed to ${confirmModal.action} user`, type: 'error' });
+            console.error(`${confirmModal.action} user error:`, err);
         }
+        setConfirmModal({ open: false, username: null, action: null });
     };
 
-    // Handler to enable user
-    const handleEnableUser = async (username) => {
-        const confirm = window.confirm("Are you sure you want to enable this user?");
-        if (!confirm) return;
-
-        try {
-            const res = await axios.put(`http://localhost:8080/api/admin/enable-user`, {
-                username: username,
-            });
-
-            setPopup({ show: true, title: 'User Enabled', message: res.data.message || 'User has been enabled.', type: 'success' });
-            // Refresh user list
-            const updatedUsers = await axios.get('http://localhost:8080/api/admin/users');
-            setUsers(updatedUsers.data);
-        } catch (err) {
-            setPopup({ show: true, title: 'Failed', message: err.response?.data?.message || 'Failed to enable user', type: 'error' });
-            console.error('Enable user error:', err);
-        }
-    };
 
     return (
         <div className="admin-dashboard-layout">
@@ -80,6 +80,16 @@ const EmployeeOverview = () => {
                     onClose={() => setPopup(popup => ({ ...popup, show: false }))}
                 />
             )}
+            <ConfirmationModal
+                isOpen={confirmModal.open}
+                onClose={() => setConfirmModal({ open: false, username: null, action: null })}
+                onConfirm={confirmUserAction}
+                title={confirmModal.action === 'disable' ? 'Disable User' : 'Enable User'}
+                message={confirmModal.action === 'disable' ? 'Are you sure you want to disable this user?' : 'Are you sure you want to enable this user?'}
+                confirmText={confirmModal.action === 'disable' ? 'Disable' : 'Enable'}
+                cancelText="Cancel"
+                type={confirmModal.action === 'disable' ? 'danger' : 'info'}
+            />
             <Sidebar />
             <main className="admin-dashboard-main" style={{ padding: '32px 36px 36px 36px', maxWidth: 1400, margin: '0 auto', background: 'linear-gradient(135deg, #e0e7ff 0%, #f8fafc 100%)', minHeight: '100vh' }}>
                 <style>{`

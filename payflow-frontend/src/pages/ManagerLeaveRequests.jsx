@@ -201,34 +201,25 @@ function ManagerLeaveRequests() {
                         </div>
 
                         {/* Leave Requests Table */}
-                        <div className="leave-history-card dashboard-card leave-card">
-                            <div className="leave-history-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-                                <div style={{ display: 'flex', alignItems: 'center' }}>
-                                    <FaHistory style={{ color: '#6366f1', fontSize: 22, marginRight: 8 }} />
-                                    <span style={{ fontSize: 20, fontWeight: 600 }}>
-                                        Leave Requests
-                                        {leaves.length > 0 && <span className="record-count"> ({leaves.length} total)</span>}
-                                    </span>
-                                </div>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                                    <label htmlFor="sort-status" style={{ fontSize: 14, color: '#444', marginRight: 8, fontWeight: 500 }}>Filter by Status:</label>
-                                    <select
-                                        id="sort-status"
-                                        value={sortStatus}
-                                        onChange={e => setSortStatus(e.target.value)}
-                                        style={{
-                                            padding: '7px 18px',
-                                            borderRadius: 8,
-                                            border: '1.5px solid #6366f1',
-                                            background: '#f5f6fa',
-                                            color: '#222',
-                                            fontWeight: 600,
-                                            fontSize: 15,
-                                            boxShadow: '0 2px 8px #e0e7ef',
-                                            outline: 'none',
-                                            cursor: 'pointer',
-                                        }}
-                                    >
+                        <div className="leave-history-card dashboard-card leave-card" style={{
+                            background: 'linear-gradient(135deg, #E3E6FD 0%, #F8F9FF 100%)',
+                            boxShadow: '0 8px 32px rgba(91,44,152,0.15)',
+                            borderRadius: '28px',
+                            padding: '48px 40px',
+                            marginBottom: '40px',
+                            width: '100%',
+                            maxWidth: '1200px',
+                            minHeight: '350px',
+                            marginLeft: 'auto',
+                            marginRight: 'auto',
+                        }}>
+                            <div style={{ marginBottom: '32px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', columnGap: '430px' }}>
+                                <h2 style={{ color: '#5B2C98', fontWeight: 'bold', margin: 0, display: 'flex', alignItems: 'center' }}>
+                                    &#8635; Leave Requests <span style={{ fontSize: '16px', fontWeight: 'normal', marginLeft: '8px' }}>({leaves.length} total)</span>
+                                </h2>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                    <span style={{ fontWeight: 'bold' }}>Filter by Status:</span>
+                                    <select value={sortStatus} onChange={e => setSortStatus(e.target.value)} style={{ padding: '7px 18px', borderRadius: '8px', border: '1.5px solid #6366f1', background: '#f5f6fa', color: '#222', fontWeight: 600, fontSize: 15, boxShadow: '0 2px 8px #e0e7ef', outline: 'none', cursor: 'pointer' }}>
                                         <option value="">All Requests</option>
                                         <option value="PENDING">Pending</option>
                                         <option value="ACCEPTED">Accepted</option>
@@ -280,12 +271,20 @@ function ManagerLeaveRequests() {
                                                         statusText = 'REJECTED';
                                                     }
 
+                                                    // Helper to count leave days excluding Sundays
+                                                    const countLeaveDaysExcludingSundays = (fromDate, toDate) => {
+                                                        let count = 0;
+                                                        let current = new Date(fromDate);
+                                                        let end = new Date(toDate);
+                                                        while (current <= end) {
+                                                            if (current.getDay() !== 0) count++;
+                                                            current.setDate(current.getDate() + 1);
+                                                        }
+                                                        return count;
+                                                    };
                                                     let duration = '-';
                                                     if (leave.fromDate && leave.toDate) {
-                                                        const from = new Date(leave.fromDate);
-                                                        const to = new Date(leave.toDate);
-                                                        const diff = Math.abs(to - from);
-                                                        duration = (Math.floor(diff / (1000 * 60 * 60 * 24)) + 1) + ' day(s)';
+                                                        duration = countLeaveDaysExcludingSundays(leave.fromDate, leave.toDate) + ' day(s)';
                                                     }
 
                                                     // Format dates
@@ -303,16 +302,32 @@ function ManagerLeaveRequests() {
                                                             <td>{formattedTo}</td>
                                                             <td style={{ fontWeight: 600 }}>{duration}</td>
                                                             <td>
-                                                                <span style={{
-                                                                    padding: '4px 8px',
-                                                                    borderRadius: '4px',
-                                                                    fontSize: '12px',
-                                                                    fontWeight: '500',
-                                                                    background: leave.isPaid === false ? '#fef3c7' : '#dbeafe',
-                                                                    color: leave.isPaid === false ? '#d97706' : '#1d4ed8'
-                                                                }}>
-                                                                    {leave.isPaid === false ? 'Unpaid' : 'Paid'}
-                                                                </span>
+                                                                {(() => {
+                                                                    let leaveTypeDisplay = '';
+                                                                    if (typeof leave.paidDays === 'number' && typeof leave.unpaidDays === 'number') {
+                                                                        if (leave.paidDays > 0 && leave.unpaidDays > 0) {
+                                                                            leaveTypeDisplay = `Paid/Unpaid (${leave.paidDays}/${leave.unpaidDays})`;
+                                                                        } else if (leave.paidDays > 0) {
+                                                                            leaveTypeDisplay = 'Paid';
+                                                                        } else if (leave.unpaidDays > 0) {
+                                                                            leaveTypeDisplay = 'Unpaid';
+                                                                        }
+                                                                    } else {
+                                                                        leaveTypeDisplay = leave.isPaid === false ? 'Unpaid' : 'Paid';
+                                                                    }
+                                                                    return (
+                                                                        <span style={{
+                                                                            padding: '4px 8px',
+                                                                            borderRadius: '4px',
+                                                                            fontSize: '12px',
+                                                                            fontWeight: '500',
+                                                                            background: leaveTypeDisplay.includes('Unpaid') ? '#fef3c7' : '#dbeafe',
+                                                                            color: leaveTypeDisplay.includes('Unpaid') ? '#d97706' : '#1d4ed8'
+                                                                        }}>
+                                                                            {leaveTypeDisplay}
+                                                                        </span>
+                                                                    );
+                                                                })()}
                                                             </td>
                                                             <td>{leave.type || 'Annual'}</td>
                                                             <td style={{ maxWidth: '200px', wordBreak: 'break-word' }}>{leave.reason || '-'}</td>

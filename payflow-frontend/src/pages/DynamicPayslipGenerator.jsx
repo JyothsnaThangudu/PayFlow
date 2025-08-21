@@ -66,34 +66,119 @@ const DynamicPayslipGenerator = () => {
     const downloadPDF = () => {
         if (!payslipData) return;
 
-        const doc = new jsPDF();
         const { employee, period, salary, deductions, attendance, calculations } = payslipData;
 
-        // Company Header
-        doc.setFontSize(20);
-        doc.setFont('helvetica', 'bold');
-        doc.text('PayFlow Inc.', 20, 25);
-        doc.setFontSize(12);
-        doc.setFont('helvetica', 'normal');
-        doc.text('Salary Slip', 20, 35);
+        // Fetch bank details asynchronously before generating PDF
+        axios.get(`/api/employee/${employee.id}/bank-details`).then(res => {
+            const data = res.data || {};
+            const bankDetails = {
+                uan: data.uan || '-',
+                pfNo: data.pfNo || '-',
+                esiNo: data.esiNo || '-',
+                bank: data.bank || '-',
+                accountNo: data.accountNo || '-'
+            };
 
-        // Employee Information
-        doc.setFontSize(14);
-        doc.setFont('helvetica', 'bold');
-        doc.text('Employee Information', 20, 55);
-        
-        doc.setFontSize(11);
-        doc.setFont('helvetica', 'normal');
-        doc.text(`Name: ${employee.name}`, 20, 70);
-        doc.text(`Employee ID: ${employee.id}`, 20, 80);
-        doc.text(`Position: ${employee.position}`, 20, 90);
-        doc.text(`Period: ${period.month} ${period.year}`, 20, 100);
+            const doc = new jsPDF();
+
+            // Company Header
+            doc.setFontSize(20);
+            doc.setFont('helvetica', 'bold');
+            doc.text('PayFlow Inc.', 20, 25);
+            doc.setFontSize(12);
+            doc.setFont('helvetica', 'normal');
+            doc.text('Salary Slip', 20, 35);
+
+            // Employee Information
+            doc.setFontSize(14);
+            doc.setFont('helvetica', 'bold');
+            doc.text('Employee Information', 20, 55);
+
+            doc.setFontSize(11);
+            doc.setFont('helvetica', 'normal');
+            doc.text(`Name: ${employee.name}`, 20, 70);
+            doc.text(`Employee ID: ${employee.id}`, 20, 80);
+            doc.text(`Position: ${employee.position}`, 20, 90);
+            doc.text(`Period: ${period.month} ${period.year}`, 20, 100);
+            doc.text(`UAN: ${bankDetails.uan}`, 20, 110);
+            doc.text(`PF No.: ${bankDetails.pfNo}`, 20, 120);
+            doc.text(`ESI No.: ${bankDetails.esiNo}`, 20, 130);
+            doc.text(`Bank: ${bankDetails.bank}`, 20, 140);
+            doc.text(`Account No.: ${bankDetails.accountNo}`, 20, 150);
+
+            // Attendance Information
+            doc.setFontSize(14);
+            doc.setFont('helvetica', 'bold');
+            doc.text('Attendance Details', 120, 55);
+
+            doc.setFontSize(11);
+            doc.setFont('helvetica', 'normal');
+            doc.text(`Total Days in Month: ${attendance.totalDaysInMonth}`, 120, 70);
+            doc.text(`Working Days: ${attendance.workingDays}`, 120, 80);
+            doc.text(`Unpaid Leave Days: ${attendance.unpaidLeaveDays}`, 120, 90);
+            doc.text(`Effective Working Days: ${attendance.effectiveWorkingDays}`, 120, 100);
+
+            // Salary Details Table
+            const salaryData = [
+                ['Basic Salary', formatCurrency(salary.basicSalary)],
+                ['HRA', formatCurrency(salary.hra)],
+                ['Conveyance Allowance', formatCurrency(salary.conveyanceAllowance)],
+                ['Medical Allowance', formatCurrency(salary.medicalAllowance)],
+                ['Special Allowance', formatCurrency(salary.specialAllowance)],
+                ['Performance Bonus', formatCurrency(salary.performanceBonus)],
+                ['Gross Monthly Salary', formatCurrency(salary.grossMonthlySalary)]
+            ];
+
+            doc.autoTable({
+                startY: 120,
+                head: [['Earnings', 'Amount (₹)']],
+                body: salaryData,
+                theme: 'grid',
+                headStyles: { fillColor: [41, 128, 185] },
+                styles: { fontSize: 10 }
+            });
+
+            // Deductions Table
+            const deductionData = [
+                ['Employee PF', formatCurrency(deductions.employeePf)],
+                ['Professional Tax', formatCurrency(deductions.professionalTax)],
+                ['TDS', formatCurrency(deductions.tds)],
+                ['Insurance Premium', formatCurrency(deductions.insurancePremium)],
+                ['Total Deductions', formatCurrency(deductions.totalMonthlyDeductions)]
+            ];
+
+            const finalY = doc.lastAutoTable.finalY + 10;
+            doc.autoTable({
+                startY: finalY,
+                head: [['Deductions', 'Amount (₹)']],
+                body: deductionData,
+                theme: 'grid',
+                headStyles: { fillColor: [231, 76, 60] },
+                styles: { fontSize: 10 }
+            });
+
+            // Final Calculations
+            const calcY = doc.lastAutoTable.finalY + 15;
+            doc.setFontSize(12);
+            doc.setFont('helvetica', 'bold');
+            doc.text('Final Calculations:', 20, calcY);
+            doc.setFontSize(11);
+            doc.setFont('helvetica', 'normal');
+            doc.text(`Daily Net Salary: ${formatCurrency(calculations.dailyNetSalary)}`, 20, calcY + 15);
+            doc.text(`Unpaid Leave Deduction: ${formatCurrency(calculations.unpaidLeaveDeduction)}`, 20, calcY + 25);
+            doc.setFontSize(14);
+            doc.setFont('helvetica', 'bold');
+            doc.text(`Final Net Salary: ${formatCurrency(calculations.finalNetSalary)}`, 20, calcY + 40);
+
+            // Save PDF
+            doc.save(`payslip_${employee.name}_${period.month}_${period.year}.pdf`);
+        });
 
         // Attendance Information
         doc.setFontSize(14);
         doc.setFont('helvetica', 'bold');
         doc.text('Attendance Details', 120, 55);
-        
+
         doc.setFontSize(11);
         doc.setFont('helvetica', 'normal');
         doc.text(`Total Days in Month: ${attendance.totalDaysInMonth}`, 120, 70);

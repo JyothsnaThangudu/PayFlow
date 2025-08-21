@@ -458,7 +458,9 @@ const TeamMembers = () => {
                                     <button className="modal-close" onClick={() => {
                                         setShowLeaveModal(false);
                                         setLeaveHistoryMember(null);
-                                    }}>
+                                    }}
+                                        style={{ position: 'absolute', top: '10px', right: '10px', fontSize: '24px', color: 'red', background: 'transparent', border: 'none', cursor: 'pointer' }}
+                                    >
                                         <FaTimes />
                                     </button>
                                 </div>
@@ -649,6 +651,7 @@ const TeamMembers = () => {
                                             setShowModal(false);
                                             setMemberDetails(null);
                                         }}
+                                        style={{ position: 'absolute', top: '10px', right: '10px', fontSize: '24px', color: 'red', background: 'transparent', border: 'none', cursor: 'pointer' }}
                                     >
                                         <FaTimes />
                                     </button>

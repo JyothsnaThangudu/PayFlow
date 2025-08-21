@@ -1,156 +1,211 @@
-/* EmployeeDashboard.css */
+/* Redesigned EmployeeDashboard.css */
 
 :root {
-  --primary-color: #4f46e5;
+  --primary-color: #6366f1;
   --secondary-color: #22c55e;
   --danger-color: #ef4444;
-  --bg-light: #f9fafb;
-  --text-dark: #1f2937;
-  --text-muted: #6b7280;
-  --card-bg: #ffffff;
+  --bg-light: #f3f4f6;
+  --text-dark: #1e293b;
+  --text-muted: #64748b;
+  --card-bg: #fff;
+  --card-radius: 20px;
+  --shadow: 0 8px 32px rgba(0,0,0,0.08);
 }
 
 body {
   margin: 0;
-  font-family: 'Poppins', sans-serif;
-  background-color: var(--bg-light);
+  font-family: 'Inter', 'Poppins', sans-serif;
+  background: var(--bg-light);
 }
 
 .employee-dashboard-layout {
   display: flex;
   min-height: 100vh;
-  background: linear-gradient(135deg, #eef2ff, #f0fdf4);
+  background: linear-gradient(120deg, #e0e7ff 0%, #f0fdf4 100%);
 }
 
 .employee-dashboard-content {
   flex: 1;
-  padding: 40px;
+  padding: 16px 8px;
   overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .profile-header {
   display: flex;
   align-items: center;
-  background: linear-gradient(to right, #6366f1, #4ade80);
-  padding: 25px 30px;
-  border-radius: 18px;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
-  color: white;
-  margin-bottom: 30px;
-  gap: 25px;
+  background: linear-gradient(90deg, #6366f1 60%, #22d3ee 100%);
+  padding: 24px 32px;
+  border-radius: var(--card-radius);
+  box-shadow: var(--shadow);
+  color: #fff;
+  margin-bottom: 32px;
+  gap: 32px;
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+  max-width: 1100px;
+}
+
+.profile-header::after {
+  content: '';
+  position: absolute;
+  right: -60px;
+  top: -60px;
+  width: 180px;
+  height: 180px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 50%;
+  z-index: 0;
 }
 
 .profile-avatar {
-  background-color: rgba(255, 255, 255, 0.1);
+  background: rgba(255,255,255,0.18);
   border-radius: 50%;
-  padding: 10px;
+  padding: 14px;
+  box-shadow: 0 2px 12px rgba(99,102,241,0.12);
+  z-index: 1;
+}
+
+.profile-header-info {
+  z-index: 1;
 }
 
 .profile-header-info h2 {
-  font-size: 28px;
-  margin-bottom: 10px;
-  color: white;
+  font-size: 32px;
+  margin-bottom: 12px;
+  color: #fff;
+  font-weight: 700;
 }
 
-.profile-header-meta span {
-  display: inline-block;
-  margin-right: 20px;
-  font-size: 15px;
+.profile-header-meta {
+  display: flex;
+  gap: 28px;
+  font-size: 16px;
   color: #e0f2fe;
+  font-weight: 500;
 }
 
 .dashboard-cards {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 24px;
-  margin-bottom: 35px;
+  display: flex;
+  gap: 12px;
+  margin-bottom: 0;
+}
+
+.dashboard-cards + .dashboard-cards {
+  margin-top: 12px;
 }
 
 .dashboard-card {
-  background: var(--card-bg);
-  padding: 24px;
+  background: linear-gradient(135deg, #f8fafc 80%, #e0e7ff 100%);
   border-radius: 16px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-  transition: all 0.3s ease-in-out;
+  box-shadow: 0 2px 12px rgba(99,102,241,0.08);
+  border: 2px solid #6366f1;
+  padding: 16px 12px;
+  flex: 0 0 320px;
+  min-width: 260px;
+  max-width: 340px;
+  height: 220px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  transition: box-shadow 0.2s, transform 0.2s, border-color 0.2s;
 }
 
 .dashboard-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 8px 32px rgba(99,102,241,0.18);
+  border-color: #6366f1;
+  transform: translateY(-4px) scale(1.03);
 }
 
 .dashboard-card h3 {
-  font-size: 20px;
-  color: var(--text-dark);
-  margin-bottom: 16px;
+  font-size: 24px;
+  font-weight: 700;
+  margin-bottom: 18px;
+  color: #4338ca;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
+  letter-spacing: 0.5px;
+.dashboard-card .card-accent {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 6px;
+  border-top-left-radius: 18px;
+  border-top-right-radius: 18px;
+  background: linear-gradient(90deg, #6366f1 60%, #22d3ee 100%);
+}
+.leave-card {
+  border-color: #22c55e;
+}
+.payroll-card {
+  border-color: #8b5cf6;
+}
+.holidays-card {
+  border-color: #38bdf8;
+}
+.reminders-card {
+  border-color: #f59e0b;
+}
 }
 
-.profile-list {
+.holidays-list, .reminders-list {
   list-style: none;
   padding: 0;
   margin: 0;
-  color: var(--text-muted);
+  max-height: 120px;
+  overflow-y: auto;
 }
 
-.profile-list li {
+.holidays-list li, .reminders-list li {
+  background: #eef2ff;
+  border-radius: 12px;
+  padding: 12px 16px;
   margin-bottom: 10px;
+  font-size: 16px;
+  color: #3730a3;
+  box-shadow: 0 2px 8px rgba(99,102,241,0.06);
   display: flex;
   align-items: center;
-  gap: 8px;
+}
+
+.holidays-list li:last-child, .reminders-list li:last-child {
+  margin-bottom: 0;
+}
+
+.quick-link-btn {
+  background: linear-gradient(90deg, #6366f1 60%, #22d3ee 100%);
+  color: #fff;
+  padding: 10px 22px;
+  border: none;
   font-size: 15px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 600;
+  margin-right: 10px;
+  margin-bottom: 10px;
+  box-shadow: 0 2px 8px rgba(99,102,241,0.10);
+  transition: background 0.2s, transform 0.2s;
 }
 
-.notifications-list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  color: var(--text-muted);
+.quick-link-btn:hover {
+  background: linear-gradient(90deg, #4338ca 60%, #0891b2 100%);
+  transform: translateY(-2px) scale(1.04);
 }
 
-.notifications-list li {
-  padding: 8px 0;
-  border-bottom: 1px solid #e5e7eb;
-}
-
-.notification-item {
-  padding: 12px;
-  border-radius: 8px;
-  margin-bottom: 8px;
-  border-bottom: none !important;
-}
-
-.notification-item.warning {
-  background-color: #fef3c7;
-  border: 1px solid #f59e0b;
-}
-
-.notification-content strong {
-  color: #92400e;
-  display: block;
-  margin-bottom: 4px;
-}
-
-.notification-content p {
-  margin: 4px 0;
-  color: #78350f;
-  font-size: 14px;
-}
-
-.notification-content small {
-  color: #a16207;
-  font-size: 12px;
-}
-
-/* Payment Hold Alert Styles */
 .payment-hold-alert {
-  background: linear-gradient(135deg, #fef3c7, #fed7aa);
+  background: linear-gradient(90deg, #fef3c7 60%, #fed7aa 100%);
   border: 2px solid #f59e0b;
-  border-radius: 8px;
-  padding: 15px;
+  border-radius: 12px;
+  padding: 18px;
   margin-top: 10px;
+  box-shadow: 0 2px 8px rgba(245,158,11,0.08);
 }
 
 .hold-status {
@@ -159,19 +214,19 @@ body {
 
 .hold-badge {
   background: #dc2626;
-  color: white;
-  padding: 6px 12px;
-  border-radius: 20px;
-  font-size: 12px;
-  font-weight: 600;
+  color: #fff;
+  padding: 8px 16px;
+  border-radius: 24px;
+  font-size: 13px;
+  font-weight: 700;
   display: inline-block;
-  margin-bottom: 10px;
+  margin-bottom: 12px;
 }
 
 .hold-status p {
-  margin: 5px 0;
+  margin: 6px 0;
   color: #92400e;
-  font-size: 14px;
+  font-size: 15px;
 }
 
 .hold-status small {
@@ -181,178 +236,71 @@ body {
 
 .leave-card p,
 .payroll-card p {
-  font-size: 15px;
+  font-size: 16px;
   margin-bottom: 10px;
 }
 
 .leave-card span {
-  font-weight: bold;
+  font-weight: 600;
 }
 
 .payroll-card button {
-  background-color: var(--primary-color);
-  color: white;
-  padding: 8px 16px;
+  background: linear-gradient(90deg, #6366f1 60%, #22d3ee 100%);
+  color: #fff;
+  padding: 10px 22px;
   border: none;
-  border-radius: 8px;
-  font-size: 14px;
+  border-radius: 10px;
+  font-size: 15px;
   cursor: pointer;
-  margin-top: 10px;
-  transition: background-color 0.3s ease;
+  margin-top: 12px;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(99,102,241,0.08);
+  transition: background 0.2s, transform 0.2s;
 }
 
 .payroll-card button:hover {
-  background-color: #4338ca;
+  background: linear-gradient(90deg, #4338ca 60%, #0891b2 100%);
+  transform: translateY(-2px) scale(1.03);
 }
 
 .quick-links {
   display: flex;
-  gap: 16px;
+  gap: 64px;
+  margin-bottom: 0;
   flex-wrap: wrap;
-  margin-top: 20px;
+  justify-content: center;
+  margin-top: 10px;
 }
 
-.quick-link-btn {
-  background: linear-gradient(135deg, #6366f1, #22d3ee);
-  color: white;
-  padding: 10px 20px;
-  border: none;
-  font-size: 14px;
-  border-radius: 10px;
-  cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.quick-link-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.15);
-}
-
-@media (max-width: 768px) {
+@media (max-width: 1024px) {
+  .dashboard-cards {
+    flex-direction: column;
+    gap: 24px;
+  }
+  .employee-dashboard-content {
+    padding: 32px 12px;
+  }
   .profile-header {
     flex-direction: column;
     align-items: flex-start;
-    gap: 20px;
-  }
-
-  .quick-links {
-    flex-direction: column;
-  }
-
-  .quick-link-btn {
-    width: 100%;
-    text-align: center;
+    gap: 18px;
+    padding: 24px 18px;
   }
 }
-/* Enhanced Card Styles */
-.dashboard-card {
-  position: relative;
-  background: var(--card-bg);
-  padding: 24px;
-  border-radius: 18px;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
-  overflow: hidden;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
 
-.dashboard-card:hover {
-  transform: translateY(-6px);
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
-}
-
-/* Add a colored left border */
-.dashboard-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  height: 100%;
-  width: 6px;
-  border-top-left-radius: 18px;
-  border-bottom-left-radius: 18px;
-}
-
-.profile-card::before {
-  background: #3b82f6; /* Blue */
-}
-
-.leave-card::before {
-  background: #22c55e; /* Green */
-}
-
-.notifications-card::before {
-  background: #f59e0b; /* Amber */
-}
-
-.payroll-card::before {
-  background: #8b5cf6; /* Violet */
-}
-
-/* Specific icon colors inside headings */
-.profile-card h3 svg {
-  color: #3b82f6;
-}
-
-.leave-card h3 svg {
-  color: #22c55e;
-}
-
-.notifications-card h3 svg {
-  color: #f59e0b;
-}
-
-.payroll-card h3 svg {
-  color: #8b5cf6;
-}
-
-/* Card heading */
-.dashboard-card h3 {
-  font-size: 18px;
-  font-weight: 600;
-  margin-bottom: 14px;
-  color: var(--text-dark);
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-/* Profile list style inside card */
-.profile-list li {
-  background-color: #f1f5f9;
-  padding: 8px 12px;
-  border-radius: 8px;
-  margin-bottom: 8px;
-  font-size: 14px;
-  color: #334155;
-}
-
-/* Two-column layout for profile card content */
-.profile-list {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 12px 24px;
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  color: #334155;
-}
-
-/* Each profile item styled cleanly */
-.profile-list li {
-  background-color: #f1f5f9;
-  padding: 10px 12px;
-  border-radius: 8px;
-  font-size: 14px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  word-wrap: break-word;
-}
-
-/* Responsive grid for dashboard cards */
-.dashboard-cards {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: 24px;
-  align-items: stretch;
+@media (max-width: 600px) {
+  .employee-dashboard-content {
+    padding: 12px 4px;
+  }
+  .profile-header {
+    padding: 12px 6px;
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 12px;
+    color: #4338ca;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    letter-spacing: 0.5px;
+  }
 }

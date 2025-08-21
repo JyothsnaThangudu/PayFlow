@@ -100,10 +100,14 @@ const HRPaymentHolds = () => {
         setLoading(true);
         try {
             const finalReason = holdReason === 'Other' ? customReason.trim() : holdReason;
+            let userIdRaw = localStorage.getItem('userId');
+            let userId = (userIdRaw && userIdRaw !== 'null') ? parseInt(userIdRaw) : 1;
+            let employeeIdRaw = selectedEmployeeId;
+            let employeeId = (employeeIdRaw && employeeIdRaw !== 'null') ? parseInt(employeeIdRaw) : null;
             const response = await axios.post('/api/payment-hold/place', {
-                employeeId: selectedEmployeeId,
+                employeeId: employeeId,
                 holdReason: finalReason,
-                holdByUserId: localStorage.getItem('userId') || 1,
+                holdByUserId: userId,
                 holdByUserRole: 'HR',
                 holdMonth: holdMonth,
                 holdYear: holdYear
@@ -143,9 +147,12 @@ const HRPaymentHolds = () => {
         const { employeeId } = confirmModal;
         setLoading(true);
         try {
+            let userIdRaw = localStorage.getItem('userId');
+            let releasedByUserId = (userIdRaw && userIdRaw !== 'null') ? parseInt(userIdRaw) : 1;
+            let employeeIdClean = (employeeId && employeeId !== 'null') ? parseInt(employeeId) : null;
             const response = await axios.post('/api/payment-hold/release', {
-                employeeId: employeeId,
-                releasedByUserId: localStorage.getItem('userId') || 1,
+                employeeId: employeeIdClean,
+                releasedByUserId: releasedByUserId,
                 releasedByUserRole: 'HR'
             });
 

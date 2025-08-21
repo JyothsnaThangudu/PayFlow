@@ -357,18 +357,7 @@ function ManagerDashboard() {
 
 
 
-    // const formatDate = (dateString) => {
-    //     const date = new Date(dateString);
-    //     const now = new Date();
-    //     const diffTime = Math.abs(now - date);
-    //     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    //
-    //     if (diffDays === 1) return 'Yesterday';
-    //     if (diffDays === 0) return 'Today';
-    //     if (diffDays <= 7) return `${diffDays} days ago`;
-    //     return date.toLocaleDateString();
-    // };
-
+    
     return (
         <div className="manager-dashboard-layout">
             <SidebarManager />
@@ -381,14 +370,6 @@ function ManagerDashboard() {
                     </div>
                     <div className="header-right">
                         <div className="quick-actions">
-                            <button
-                                className="quick-action-btn"
-                                onClick={() => navigate('/manager/payroll-dashboard')}
-                                title="Manage Payroll"
-                            >
-                                <FaClipboardList /> Payroll
-                            </button>
-
                             <button 
                                 className="quick-action-btn"
                                 onClick={() => navigate(`/manager/${managerId}/leaves`)}
@@ -403,13 +384,6 @@ function ManagerDashboard() {
                                 title="Manage Team"
                             >
                                 <FaUsers /> Team
-                            </button>
-                            <button 
-                                className="quick-action-btn"
-                                onClick={() => navigate('/projects')}
-                                title="View Projects"
-                            >
-                                <FaProjectDiagram /> Projects
                             </button>
                         </div>
                         <div className="manager-dashboard-bell-wrapper">
@@ -668,8 +642,8 @@ function ManagerDashboard() {
                                 )}
 
                                 {/* All Leave Requests with Pagination */}
-                                <div className="all-leaves-section">
-                                    <div className="section-header">
+                                <div className="all-leaves-section" style={{ marginTop: '60px' }}>
+                                    <div className="section-header" style={{ marginBottom: '32px' }}>
                                         <h4><FaClipboardList /> All Leave Requests</h4>
                                         <div className="pagination-info">
                                             Page {currentLeavePage} of {totalLeavePages || 1} ({sortedLeaves.length} total)

@@ -14,22 +14,7 @@ export default function Header() {
 
     return (
         <div className="header-container">
-            <input
-                type="text"
-                placeholder="Search for employee, candidate or project"
-                className="search-bar"
-            />
-            <div className="header-right">
-                <FaBell className="icon" />
-                <FaEnvelope className="icon" />
-                <img
-                    src="https://i.pravatar.cc/40"
-                    alt="avatar"
-                    className="avatar"
-                />
-                {/* ✅ Correct variable name */}
-                <span className="user-name">{hrName}</span>
-            </div>
+            {/* Search bar, bell icon, mail icon, profile icon, and username removed */}
         </div>
     );
 }

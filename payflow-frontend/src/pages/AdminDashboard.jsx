@@ -9,6 +9,31 @@ import { FaEdit, FaBell, FaUserPlus, FaFileExport, FaBullhorn, FaSync, FaTimes }
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 
 const AdminDashboard = () => {
+    // Export employees list as CSV
+    const handleExportEmployees = () => {
+        if (!employees || employees.length === 0) {
+            setPopup({ show: true, title: 'Export Failed', message: 'No employee data to export.', type: 'error' });
+            return;
+        }
+        // Get keys for CSV header
+        const keys = Object.keys(employees[0]);
+        const csvRows = [keys.join(",")];
+        employees.forEach(emp => {
+            const row = keys.map(k => `"${(emp[k] !== null && emp[k] !== undefined) ? String(emp[k]).replace(/"/g, '""') : ''}"`).join(",");
+            csvRows.push(row);
+        });
+        const csvContent = csvRows.join("\n");
+        const blob = new Blob([csvContent], { type: 'text/csv' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'employees_list.csv';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+        setPopup({ show: true, title: 'Export Successful', message: 'Employees list exported as CSV.', type: 'success' });
+    };
     const navigate = useNavigate();
     const [users, setUsers] = useState([]);
     const [announcementModalOpen, setAnnouncementModalOpen] = useState(false);
@@ -486,9 +511,10 @@ const AdminDashboard = () => {
                                     <button className="quick-action-btn add-user-btn" title="Add User" onClick={() => navigate('/create-user')}>
                                         <FaUserPlus style={{ marginRight: 6 }} /> Add User
                                     </button>
-                                    <button className="quick-action-btn export-btn" title="Export Data" onClick={() => alert('Exporting data...')}>
+                                    <button className="quick-action-btn export-btn" title="Export Data" onClick={handleExportEmployees}>
                                         <FaFileExport style={{ marginRight: 6 }} /> Export
                                     </button>
+
                                     <button className="quick-action-btn announce-btn" title="Send Announcement" onClick={() => setAnnouncementModalOpen(true)}>
                                         <FaBullhorn style={{ marginRight: 6 }} /> Announce
                                     </button>

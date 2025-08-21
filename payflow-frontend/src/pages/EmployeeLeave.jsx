@@ -24,19 +24,66 @@ const EmployeeLeave = () => {
     });
     
     const totalLeaves = 12;
-    const usedLeaves = useMemo(() => {
+    // Helper to count leave days excluding Sundays
+    const countLeaveDaysExcludingSundays = (fromDate, toDate) => {
+        let count = 0;
+        let current = new Date(fromDate);
+        let end = new Date(toDate);
+        while (current <= end) {
+            if (current.getDay() !== 0) count++;
+            current.setDate(current.getDate() + 1);
+        }
+        return count;
+    };
+
+    // Used paid leaves (approved, paid days only, excluding Sundays)
+    const usedPaidLeaves = useMemo(() => {
         return leaveHistory.filter(l => l.status === 'ACCEPTED').reduce((total, leave) => {
-            if (leave.leaveDays) {
-                return total + leave.leaveDays;
-            } else if (leave.fromDate && leave.toDate) {
-                const days = Math.ceil((new Date(leave.toDate) - new Date(leave.fromDate)) / (1000 * 60 * 60 * 24)) + 1;
-                return total + days;
+            if (typeof leave.paidDays === 'number') {
+                return total + leave.paidDays;
+            } else if (leave.isPaid && leave.fromDate && leave.toDate) {
+                return total + countLeaveDaysExcludingSundays(leave.fromDate, leave.toDate);
             }
             return total;
         }, 0);
     }, [leaveHistory]);
-    
-    const remainingLeaves = Math.max(0, totalLeaves - leaveStats.usedPaidLeaves);
+
+    // Used unpaid leaves (approved, unpaid days only, excluding Sundays)
+    const usedUnpaidLeaves = useMemo(() => {
+        return leaveHistory.filter(l => l.status === 'ACCEPTED').reduce((total, leave) => {
+            if (typeof leave.unpaidDays === 'number') {
+                return total + leave.unpaidDays;
+            } else if (leave.isPaid === false && leave.fromDate && leave.toDate) {
+                return total + countLeaveDaysExcludingSundays(leave.fromDate, leave.toDate);
+            }
+            return total;
+        }, 0);
+    }, [leaveHistory]);
+
+    // Remaining paid leaves
+    const remainingLeaves = Math.max(0, totalLeaves - usedPaidLeaves);
+
+    // Used unpaid leaves this month (approved, unpaid days only, excluding Sundays)
+    const unpaidLeavesThisMonth = useMemo(() => {
+        const now = new Date();
+        const month = now.getMonth();
+        const year = now.getFullYear();
+        return leaveHistory.filter(l => l.status === 'ACCEPTED').reduce((total, leave) => {
+            if (typeof leave.unpaidDays === 'number' && leave.fromDate && leave.toDate) {
+                const from = new Date(leave.fromDate);
+                if (from.getMonth() === month && from.getFullYear() === year) {
+                    return total + leave.unpaidDays;
+                }
+            } else if (leave.isPaid === false && leave.fromDate && leave.toDate) {
+                const from = new Date(leave.fromDate);
+                if (from.getMonth() === month && from.getFullYear() === year) {
+                    return total + countLeaveDaysExcludingSundays(leave.fromDate, leave.toDate);
+                }
+            }
+            return total;
+        }, 0);
+    }, [leaveHistory]);
+
     const totalRequests = leaveHistory.length;
     const pendingRequests = leaveHistory.filter(l => l.status === 'PENDING').length;
     const approvedRequests = leaveHistory.filter(l => l.status === 'ACCEPTED').length;
@@ -132,10 +179,10 @@ const EmployeeLeave = () => {
             return;
         }
 
-        // Calculate days requested for this leave
-        const startDate = new Date(leaveForm.startDate);
-        const endDate = new Date(leaveForm.endDate);
-        const daysRequested = Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24)) + 1;
+    // Calculate days requested for this leave, excluding Sundays
+    const startDate = new Date(leaveForm.startDate);
+    const endDate = new Date(leaveForm.endDate);
+    const daysRequested = countLeaveDaysExcludingSundays(startDate, endDate);
 
         // Client-side validation
         if (startDate > endDate) {
@@ -149,26 +196,25 @@ const EmployeeLeave = () => {
             return;
         }
 
-        // Determine if this will be paid or unpaid leave
-        // const willBePaid = leaveStats.remainingPaidLeaves >= daysRequested;
-        // const leaveType = willBePaid ? "Paid Leave" : "Unpaid Leave";
-        // Calculate paid/unpaid days
-const paidDays = Math.min(leaveStats.remainingPaidLeaves, daysRequested);
-const unpaidDays = Math.max(0, daysRequested - leaveStats.remainingPaidLeaves);
 
-// Optimistically update stats
-setLeaveStats(prev => ({
-    ...prev,
-    usedPaidLeaves: prev.usedPaidLeaves + paidDays,
-    remainingPaidLeaves: prev.remainingPaidLeaves - paidDays,
-    usedUnpaidLeaves: prev.usedUnpaidLeaves + unpaidDays,
-    unpaidLeavesThisMonth: prev.unpaidLeavesThisMonth + unpaidDays
-}));
-
-
-// setLeaveStats(updatedLeaveStats);
-
-const leaveType = `${paidDays} Paid Leave(s) + ${unpaidDays} Unpaid Leave(s)`;
+        // Assign paid/unpaid days: always allot paid leaves first, remainder as unpaid
+        let paidDays = 0;
+        let unpaidDays = 0;
+        if (leaveStats.remainingPaidLeaves > 0) {
+            paidDays = Math.min(leaveStats.remainingPaidLeaves, daysRequested);
+            unpaidDays = daysRequested - paidDays;
+        } else {
+            paidDays = 0;
+            unpaidDays = daysRequested;
+        }
+        let leaveType = '';
+        if (paidDays > 0 && unpaidDays > 0) {
+            leaveType = `Paid/Unpaid (${paidDays}/${unpaidDays})`;
+        } else if (paidDays > 0) {
+            leaveType = 'Paid';
+        } else {
+            leaveType = 'Unpaid';
+        }
 
 
         setLeaveLoading(true);
@@ -178,10 +224,20 @@ const leaveType = `${paidDays} Paid Leave(s) + ${unpaidDays} Unpaid Leave(s)`;
             type: 'Annual',
             startDate: leaveForm.startDate,
             endDate: leaveForm.endDate,
-            reason: leaveForm.reason
+            reason: leaveForm.reason,
+            leaveDays: daysRequested,
+            paidDays,
+            unpaidDays,
+            leaveType
         })
             .then(res => {
-                const message = res.data.message || `Leave request submitted successfully as ${leaveType}!`;
+                // Always show duration excluding Sundays in popup
+                const popupDuration = daysRequested;
+                let popupType = leaveType;
+                if (paidDays > 0 && unpaidDays > 0) {
+                    popupType = `Paid/Unpaid (${paidDays}/${unpaidDays})`;
+                }
+                const message = `Leave request submitted successfully as ${popupType} (${popupDuration} day${popupDuration !== 1 ? 's' : ''})`;
                 setLeaveSuccess(message);
                 setLeaveError('');
                 setLeaveForm({ startDate: '', endDate: '', reason: '' });
@@ -232,7 +288,7 @@ const leaveType = `${paidDays} Paid Leave(s) + ${unpaidDays} Unpaid Leave(s)`;
                         {
                             icon: <FaFileAlt size={32} color="#6366f1" style={{ marginBottom: 8 }} />,
                             label: 'Paid Leaves',
-                            value: <span><span style={{ color: '#6366f1' }}>{leaveStats.totalPaidLeaves}</span> / <span style={{ color: 'tomato' }}>{leaveStats.usedPaidLeaves}</span> / <span style={{ color: '#22c55e' }}>{leaveStats.remainingPaidLeaves}</span></span>,
+                            value: <span><span style={{ color: '#6366f1' }}>{totalLeaves}</span> / <span style={{ color: 'tomato' }}>{usedPaidLeaves}</span> / <span style={{ color: '#22c55e' }}>{remainingLeaves}</span></span>,
                             sub: 'Total/Used/Remaining',
                             border: '2px solid #6366f1',
                             bg: 'linear-gradient(135deg,#f5f6fa 80%,#e0e7ff 100%)',
@@ -240,7 +296,7 @@ const leaveType = `${paidDays} Paid Leave(s) + ${unpaidDays} Unpaid Leave(s)`;
                         {
                             icon: <FaFileAlt size={32} color="#f97316" style={{ marginBottom: 8 }} />,
                             label: 'Unpaid Leaves',
-                            value: <span><span style={{ color: '#f97316' }}>{leaveStats.usedUnpaidLeaves}</span> / <span style={{ color: '#dc2626' }}>{leaveStats.unpaidLeavesThisMonth}</span></span>,
+                            value: <span><span style={{ color: '#f97316' }}>{usedUnpaidLeaves}</span> / <span style={{ color: '#dc2626' }}>{unpaidLeavesThisMonth}</span></span>,
                             sub: 'Year Total / This Month',
                             border: '2px solid #f97316',
                             bg: 'linear-gradient(135deg,#fff7ed 80%,#fed7aa 100%)',
@@ -380,12 +436,20 @@ const leaveType = `${paidDays} Paid Leave(s) + ${unpaidDays} Unpaid Leave(s)`;
                                                 statusText = 'REJECTED';
                                             }
 
+                                            // Helper to count leave days excluding Sundays
+                                            const countLeaveDaysExcludingSundays = (fromDate, toDate) => {
+                                                let count = 0;
+                                                let current = new Date(fromDate);
+                                                let end = new Date(toDate);
+                                                while (current <= end) {
+                                                    if (current.getDay() !== 0) count++;
+                                                    current.setDate(current.getDate() + 1);
+                                                }
+                                                return count;
+                                            };
                                             let duration = '-';
                                             if (leave.fromDate && leave.toDate) {
-                                                const from = new Date(leave.fromDate);
-                                                const to = new Date(leave.toDate);
-                                                const diff = Math.abs(to - from);
-                                                duration = (Math.floor(diff / (1000 * 60 * 60 * 24)) + 1) + ' day(s)';
+                                                duration = countLeaveDaysExcludingSundays(leave.fromDate, leave.toDate) + ' day(s)';
                                             }
 
                                             // Format dates with month name
@@ -411,6 +475,21 @@ const leaveType = `${paidDays} Paid Leave(s) + ${unpaidDays} Unpaid Leave(s)`;
                                                 }
                                             };
 
+                                            // Show split leave type if both paid and unpaid days
+                                            let leaveTypeDisplay = '';
+                                            if (typeof leave.paidDays === 'number' && typeof leave.unpaidDays === 'number') {
+                                                if (leave.paidDays > 0 && leave.unpaidDays > 0) {
+                                                    leaveTypeDisplay = `Paid/Unpaid (${leave.paidDays}/${leave.unpaidDays})`;
+                                                } else if (leave.paidDays > 0) {
+                                                    leaveTypeDisplay = 'Paid';
+                                                } else if (leave.unpaidDays > 0) {
+                                                    leaveTypeDisplay = 'Unpaid';
+                                                }
+                                            } else {
+                                                // fallback to isPaid
+                                                leaveTypeDisplay = leave.isPaid === false ? 'Unpaid' : 'Paid';
+                                            }
+
                                             return (
                                                 <tr key={idx}>
                                                     <td>{formattedFrom}</td>
@@ -422,10 +501,10 @@ const leaveType = `${paidDays} Paid Leave(s) + ${unpaidDays} Unpaid Leave(s)`;
                                                             borderRadius: '4px',
                                                             fontSize: '12px',
                                                             fontWeight: '500',
-                                                            background: leave.isPaid === false ? '#fef3c7' : '#dbeafe',
-                                                            color: leave.isPaid === false ? '#d97706' : '#1d4ed8'
+                                                            background: leaveTypeDisplay.includes('Unpaid') ? '#fef3c7' : '#dbeafe',
+                                                            color: leaveTypeDisplay.includes('Unpaid') ? '#d97706' : '#1d4ed8'
                                                         }}>
-                                                            {leave.isPaid === false ? 'Unpaid' : 'Paid'}
+                                                            {leaveTypeDisplay}
                                                         </span>
                                                     </td>
                                                     <td>{leave.reason || '-'}</td>

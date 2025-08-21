@@ -361,13 +361,8 @@ const HRResignationRequests = () => {
                                 <div style={{ position: 'relative', display: 'flex', alignItems: 'stretch' }}>
                                     <div style={{ flex: 1, background: '#fff', borderRadius: 12, boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)', overflow: 'hidden' }}>
                                         {paginatedResignations.length > 0 && (
-                                            <div className="leave-history-table-container" style={{ 
-                                                flex: 1, 
-                                                overflowX: 'auto',
-                                                width: '100%',
-                                                maxWidth: '100%'
-                                            }}>
-                                                <table className="leave-history-table">
+                                            <div className="resignation-table-container">
+                                                <table className="resignation-table">
                                                     <thead>
                                                         <tr style={{ background: '#f8fafc' }}>
                                                             <th style={{ color: '#6366f1', padding: '16px 12px', fontWeight: 700, fontSize: 14, borderBottom: '2px solid #e5e7eb' }}>Employee</th>

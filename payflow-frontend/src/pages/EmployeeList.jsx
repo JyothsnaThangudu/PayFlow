@@ -233,19 +233,20 @@ const EmployeeList = () => {
                 }
                 `}</style>
                 <div className="employee-list-card">
-                    <div className="employee-list-title">All Employees</div>
-                    <div className="employee-search-bar">
-                        <label htmlFor="employeeSearch">Search:</label>
-                        <input
-                            id="employeeSearch"
-                            type="text"
-                            placeholder="Name, email, department, or role..."
-                            value={search}
-                            onChange={e => setSearch(e.target.value)}
-                        />
-                        <div className="rows-per-page-select" style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 6 }}>
-                            <label htmlFor="rowsPerPage">Rows per page:</label>
-                            <select id="rowsPerPage" value={rowsPerPage} onChange={handleRowsPerPageChange}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 }}>
+                        <div className="employee-list-title">All Employees</div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                            <label htmlFor="employeeSearch" style={{ fontWeight: 500, color: '#6366f1', marginRight: 6 }}>Search:</label>
+                            <input
+                                id="employeeSearch"
+                                type="text"
+                                placeholder="Name, email, department, or role..."
+                                value={search}
+                                onChange={e => setSearch(e.target.value)}
+                                style={{ borderRadius: 8, border: '1.5px solid #6366f1', padding: '7px 14px', fontSize: 15, background: '#fff', minWidth: 220 }}
+                            />
+                            <label htmlFor="rowsPerPage" style={{ fontWeight: 500, color: '#64748b', marginLeft: 16 }}>Rows per page:</label>
+                            <select id="rowsPerPage" value={rowsPerPage} onChange={handleRowsPerPageChange} style={{ borderRadius: 6, padding: '4px 10px', border: '1.5px solid #e0e7ff', background: '#fff', fontSize: 15 }}>
                                 <option value={5}>5</option>
                                 <option value={10}>10</option>
                                 <option value={20}>20</option>
