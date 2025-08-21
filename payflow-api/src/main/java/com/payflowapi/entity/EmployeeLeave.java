@@ -21,8 +21,10 @@ public class EmployeeLeave {
     private String denialReason; // Reason provided by manager when denying leave
     private Boolean isPaid = true; // Indicates if this leave is paid or unpaid
     private Integer leaveDays; // Number of actual leave days taken
+
     private Integer paidDays; // Number of paid leave days in this request
     private Integer unpaidDays; // Number of unpaid leave days in this request
+
 
     // Getters and Setters
     public Long getId() { return id; }

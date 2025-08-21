@@ -196,6 +196,7 @@ const EmployeeLeave = () => {
             return;
         }
 
+
         // Assign paid/unpaid days: always allot paid leaves first, remainder as unpaid
         let paidDays = 0;
         let unpaidDays = 0;
@@ -214,6 +215,7 @@ const EmployeeLeave = () => {
         } else {
             leaveType = 'Unpaid';
         }
+
 
         setLeaveLoading(true);
         

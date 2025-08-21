@@ -21,6 +21,15 @@ public class LeaveService {
     /**
      * Calculate the number of days between two dates (inclusive)
      */
+    
+    // In LeaveService.java
+public int getRemainingPaidLeaves(Long employeeId) {
+    int totalPaidLeaves = 12; // or fetch from employee record
+    int usedPaidLeaves = employeeLeaveRepository.sumUsedPaidLeaves(employeeId); // implement sum query
+    return totalPaidLeaves - usedPaidLeaves;
+}
+
+    
     public int calculateLeaveDays(LocalDate fromDate, LocalDate toDate) {
         return (int) ChronoUnit.DAYS.between(fromDate, toDate) + 1;
     }

@@ -18,6 +18,18 @@ public interface EmployeeLeaveRepository extends JpaRepository<EmployeeLeave, Lo
 
     List<EmployeeLeave> findByEmployeeIdAndStatus(Long employeeId, String status);
 
+// Total accepted paid leaves
+@Query("SELECT COALESCE(SUM(e.paidDays), 0) FROM EmployeeLeave e WHERE e.employeeId = :employeeId AND e.status='ACCEPTED'")
+int sumUsedPaidLeaves(@Param("employeeId") Long employeeId);
+
+// Total accepted unpaid leaves this year
+@Query("SELECT COALESCE(SUM(e.unpaidDays), 0) FROM EmployeeLeave e WHERE e.employeeId = :employeeId AND e.status='ACCEPTED' AND YEAR(e.fromDate) = YEAR(CURRENT_DATE)")
+int sumUsedUnpaidLeavesThisYear(@Param("employeeId") Long employeeId);
+
+// Total accepted unpaid leaves this month
+@Query("SELECT COALESCE(SUM(e.unpaidDays), 0) FROM EmployeeLeave e WHERE e.employeeId = :employeeId AND e.status='ACCEPTED' AND YEAR(e.fromDate) = YEAR(CURRENT_DATE) AND MONTH(e.fromDate) = MONTH(CURRENT_DATE)")
+int sumUsedUnpaidLeavesThisMonth(@Param("employeeId") Long employeeId);
+
     @Query("SELECT el FROM EmployeeLeave el WHERE el.employeeId = :employeeId AND el.status = 'ACCEPTED' " +
             "AND el.toDate >= :startDate AND el.fromDate <= :endDate")
     List<EmployeeLeave> findApprovedLeavesInMonth(@Param("employeeId") Long employeeId,
